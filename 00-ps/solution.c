@@ -77,7 +77,22 @@ void ps(void)
 
 struct solution get_solution(const char *dir, const char *name)
 {
-	struct solution sol;
+	struct solution sol = {
+		.proc_dir = NULL,
+
+		.exe_path = NULL,
+
+		.cmdline_path = NULL,
+		.cmdline_buf = NULL,
+		.cmdline_args = NULL,
+
+		.environ_path = NULL,
+		.environ_buf = NULL,
+		.environ_args = NULL,
+
+		.pid = 0,
+		.error = 0
+	};
 	sol.pid = atoi(name);
 
 	sol.proc_dir = get_full_path(dir, name);
