@@ -52,7 +52,7 @@ void ps(void)
 			continue;
 		}
 		int is_pid_name = 1;
-		for (int i = 0; i < entry->d_namlen; i++)
+		for (int i = 0; entry->d_name[i] != '\0'; i++)
 		{
 			if (entry->d_name[i] < '0' || entry->d_name[i] > '9')
 			{
