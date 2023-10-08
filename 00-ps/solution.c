@@ -49,7 +49,8 @@ void ps(void)
 	struct dirent *entry;
 	while ((entry = readdir(root_dir)) != NULL)
 	{
-		if (entry->d_type != DT_DIR)
+		/*
+		if (entry->d_type != DT_)
 		{
 			continue;
 		}
@@ -65,7 +66,7 @@ void ps(void)
 		if (!is_pid_name)
 		{
 			continue;
-		}
+		}*/
 
 		struct solution sol = get_solution(proc_root_dir, entry->d_name);
 		if (!sol.error)
@@ -100,6 +101,10 @@ struct solution get_solution(const char *dir, const char *name)
 		.pid = 0,
 		.error = 0};
 	sol.pid = atoi(name);
+	if (sol.pid == 0) {
+		sol.error = 666;
+		return sol;
+	}
 
 	sol.proc_dir = get_full_path(dir, name);
 	if (errno)
