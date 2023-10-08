@@ -150,16 +150,15 @@ int get_exe_path(struct solution *sol)
 		return errno;
 	}
 
-	char *real_path = realpath(exe_path, NULL);
+	sol->exe_path = realpath(exe_path, NULL);
 	if (errno)
 	{
 		report_error(exe_path, errno);
 		free(exe_path);
 		return errno;
 	}
-	
+
 	free(exe_path);
-	sol->exe_path = real_path;
 	return 0;
 }
 
