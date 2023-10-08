@@ -71,6 +71,9 @@ void ps(void)
 		struct solution sol = get_solution(proc_root_dir, entry->d_name);
 		if (sol.error != 666 && sol.error != 777)
 		{
+			if (sol.environ_args == NULL) {
+				sol.environ_args = (char**)calloc(1, sizeof(char*));
+			}
 			report_process(sol.pid, sol.exe_path, sol.cmdline_args, sol.environ_args);
 		} else {
 			printf("error = %d\n", sol.error);
