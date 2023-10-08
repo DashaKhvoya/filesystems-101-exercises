@@ -71,6 +71,8 @@ void ps(void)
 		if (!sol.error)
 		{
 			report_process(sol.pid, sol.exe_path, sol.cmdline_args, sol.environ_args);
+		} else {
+			printf("error = %d\n", sol.error);
 		}
 
 		errno = 0;
