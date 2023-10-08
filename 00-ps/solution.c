@@ -69,7 +69,7 @@ void ps(void)
 		}*/
 
 		struct solution sol = get_solution(proc_root_dir, entry->d_name);
-		if (sol.error != 666)
+		if (sol.error != 666 && sol.error != 777)
 		{
 			report_process(sol.pid, sol.exe_path, sol.cmdline_args, sol.environ_args);
 		} else {
