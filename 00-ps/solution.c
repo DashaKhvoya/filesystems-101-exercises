@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define MAX_FILE_SIZE 10000
+
 const char *proc_root_dir = "/proc";
 
 struct solution
@@ -14,11 +16,11 @@ struct solution
 	char *exe_path;
 
 	char *cmdline_path;
-	char *cmdline_buf;
+	char cmdline_buf[MAX_FILE_SIZE];
 	char **cmdline_args;
 
 	char *environ_path;
-	char *environ_buf;
+	char environ_buf[MAX_FILE_SIZE];
 	char **environ_args;
 
 	int pid;
@@ -86,16 +88,15 @@ struct solution get_solution(const char *dir, const char *name)
 		.exe_path = NULL,
 
 		.cmdline_path = NULL,
-		.cmdline_buf = NULL,
+		.cmdline_buf = "",
 		.cmdline_args = NULL,
 
 		.environ_path = NULL,
-		.environ_buf = NULL,
+		.environ_buf = "",
 		.environ_args = NULL,
 
 		.pid = 0,
-		.error = 0
-	};
+		.error = 0};
 	sol.pid = atoi(name);
 
 	sol.proc_dir = get_full_path(dir, name);
@@ -125,7 +126,7 @@ struct solution get_solution(const char *dir, const char *name)
 		sol.error = err;
 		return sol;
 	}
-	
+
 	sol.error = 0;
 	return sol;
 }
@@ -137,11 +138,9 @@ void free_solution(struct solution sol)
 	free(sol.exe_path);
 
 	free(sol.cmdline_path);
-	free(sol.cmdline_buf);
 	free(sol.cmdline_args);
 
 	free(sol.environ_path);
-	free(sol.environ_buf);
 	free(sol.environ_args);
 }
 
@@ -180,35 +179,12 @@ int get_cmdline_args(struct solution *sol)
 		return errno;
 	}
 
-	int err = fseek(file, 0, SEEK_END);
-	if (err)
-	{
-		return err;
-	}
-
-	long file_size = ftell(file);
+	long res = fread(sol->cmdline_buf, sizeof(char), MAX_FILE_SIZE, file);
 	if (errno)
 	{
 		return errno;
 	}
-
-	err = fseek(file, 0, SEEK_SET);
-	if (err)
-	{
-		return err;
-	}
-
-	sol->cmdline_buf = (char *)calloc(file_size, sizeof(char));
-	if (errno)
-	{
-		return errno;
-	}
-
-	fread(sol->cmdline_buf, file_size, sizeof(char), file);
-	if (errno)
-	{
-		return errno;
-	}
+	long file_size = res;
 
 	fclose(file);
 
@@ -230,41 +206,18 @@ int get_environ_args(struct solution *sol)
 	}
 
 	FILE *file = fopen(sol->environ_path, "rb");
-	if (errno)
+	if (!file)
 	{
 		report_error(sol->environ_path, errno);
 		return errno;
 	}
 
-	int err = fseek(file, 0, SEEK_END);
-	if (err)
-	{
-		return err;
-	}
-
-	long file_size = ftell(file);
+	long res = fread(sol->environ_buf, sizeof(char), MAX_FILE_SIZE, file);
 	if (errno)
 	{
 		return errno;
 	}
-
-	err = fseek(file, 0, SEEK_SET);
-	if (err)
-	{
-		return err;
-	}
-
-	sol->environ_buf = (char *)calloc(file_size, sizeof(char));
-	if (errno)
-	{
-		return errno;
-	}
-
-	fread(sol->environ_buf, file_size, sizeof(char), file);
-	if (errno)
-	{
-		return errno;
-	}
+	long file_size = res;
 
 	fclose(file);
 
