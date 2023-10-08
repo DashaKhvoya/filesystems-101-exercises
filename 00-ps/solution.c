@@ -229,11 +229,12 @@ int get_environ_args(struct solution *sol)
 	long file_size = res;
 
 	fclose(file);
+	errno = 0;
 
 	sol->environ_args = get_array_from_string(sol->environ_buf, file_size);
-	if (errno)
+	if (sol->environ_args == NULL)
 	{
-		return errno;
+		return 777;
 	}
 
 	return 0;
@@ -270,7 +271,7 @@ char **get_array_from_string(char *str, long size)
 	}
 
 	char **arr = (char **)calloc(arr_size + 1, sizeof(char *));
-	if (errno)
+	if (arr == NULL)
 	{
 		return NULL;
 	}
