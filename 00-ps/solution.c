@@ -74,6 +74,8 @@ void ps(void)
 		errno = 0;
 		free_solution(sol);
 	}
+
+	closedir(root_dir);
 }
 
 struct solution get_solution(const char *dir, const char *name)
