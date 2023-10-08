@@ -71,6 +71,7 @@ void ps(void)
 			report_process(sol.pid, sol.exe_path, sol.cmdline_args, sol.environ_args);
 		}
 
+		errno = 0;
 		free_solution(sol);
 	}
 }
@@ -122,7 +123,7 @@ struct solution get_solution(const char *dir, const char *name)
 		sol.error = err;
 		return sol;
 	}
-
+	
 	sol.error = 0;
 	return sol;
 }
@@ -279,7 +280,7 @@ char *get_full_path(const char *dir, const char *file)
 	// Consider '/' and NULL at the end
 	size_t full_size = strlen(dir) + strlen(file) + 2;
 	char *buf = (char *)calloc(full_size, sizeof(char));
-	if (errno)
+	if (!buf)
 	{
 		return NULL;
 	}
