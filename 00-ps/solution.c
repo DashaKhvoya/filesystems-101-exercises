@@ -69,14 +69,12 @@ void ps(void)
 		}*/
 
 		struct solution sol = get_solution(proc_root_dir, entry->d_name);
-		report_process(sol.pid, sol.exe_path, sol.cmdline_args, sol.environ_args);
-
-		/*if (sol.error == 0)
+		if (sol.error != 666)
 		{
 			report_process(sol.pid, sol.exe_path, sol.cmdline_args, sol.environ_args);
 		} else {
 			printf("error = %d\n", sol.error);
-		}*/
+		}
 
 		errno = 0;
 		free_solution(sol);
@@ -191,6 +189,7 @@ int get_cmdline_args(struct solution *sol)
 	long res = fread(sol->cmdline_buf, sizeof(char), MAX_FILE_SIZE, file);
 	if (errno)
 	{
+		fclose(file);
 		return errno;
 	}
 	long file_size = res;
@@ -224,6 +223,7 @@ int get_environ_args(struct solution *sol)
 	long res = fread(sol->environ_buf, sizeof(char), MAX_FILE_SIZE, file);
 	if (errno)
 	{
+		fclose(file);
 		return errno;
 	}
 	long file_size = res;
@@ -274,8 +274,7 @@ char **get_array_from_string(char *str, long size)
 	{
 		return NULL;
 	}
-	arr[arr_size] = NULL;
-	if (arr_size == 0)
+	if (arr_size == 0 || size == 0)
 	{
 		return arr;
 	}
