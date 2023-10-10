@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define MAX_FILE_SIZE 10000
+#define MAX_FILE_SIZE 4096
 
 const char *proc_root_dir = "/proc";
 
@@ -75,7 +75,7 @@ void ps(void)
 			printf("  envp = [");
 			for (char **x = sol.environ_args; *x != NULL; ++x)
 				printf("'%s', ", *x);
-			printf("]\n"); 
+			printf("]\n");
 			report_process(sol.pid, sol.exe_path, sol.cmdline_args, sol.environ_args);			
 		}
 
@@ -137,7 +137,7 @@ struct solution get_solution(const char *dir, const char *name)
 	}
 
 	for (char **x = sol.environ_args; *x != NULL; ++x)
-	printf("'%s', ", *x);
+		printf("'%s', ", *x);
 
 	return sol;
 }
