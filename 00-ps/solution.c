@@ -177,6 +177,7 @@ int get_cmdline_args(struct solution *sol)
 	}
 
 	long file_size = fread(sol->cmdline_buf, sizeof(char), MAX_FILE_SIZE, file);
+	sol->environ_buf[file_size] = 0;
 
 	fclose(file);
 
@@ -205,6 +206,10 @@ int get_environ_args(struct solution *sol)
 	}
 
 	long file_size = fread(sol->environ_buf, sizeof(char), MAX_FILE_SIZE, file);
+	if (file_size > 0 && sol->environ_buf[file_size-1] != 0) {
+		file_size++;
+	}
+	sol->environ_buf[file_size] = 0;
 
 	fclose(file);
 
@@ -243,7 +248,7 @@ char **get_array_from_string(char *str, long size)
 	}
 
 	char **arr = (char **)calloc(arr_size + 1, sizeof(char *));
-	if (arr == NULL)
+	if (!arr)
 	{
 		return NULL;
 	}
