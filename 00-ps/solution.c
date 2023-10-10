@@ -191,7 +191,7 @@ int get_cmdline_args(struct solution *sol)
 	if (file_size > 0 && sol->cmdline_buf[file_size-1] != 0) {
 		file_size++;
 	}
-	sol->cmdline_args[file_size] = 0;
+	sol->cmdline_buf[file_size] = 0;
 
 	fclose(file);
 
