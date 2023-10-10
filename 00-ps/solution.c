@@ -183,7 +183,7 @@ int get_cmdline_args(struct solution *sol)
 		return 1;
 	}
 
-	FILE *file = fopen(sol->cmdline_path, "r");
+	FILE *file = fopen(sol->cmdline_path, "rb");
 	if (!file)
 	{
 		report_error(sol->cmdline_path, errno);
@@ -218,7 +218,7 @@ int get_environ_args(struct solution *sol)
 		return 1;
 	}
 
-	FILE *file = fopen(sol->environ_path, "r");
+	FILE *file = fopen(sol->environ_path, "rb");
 	if (!file)
 	{
 		report_error(sol->environ_path, errno);
