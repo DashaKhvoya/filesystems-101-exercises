@@ -195,6 +195,7 @@ int get_cmdline_args(struct solution *sol)
 
 	fclose(file);
 
+	file_size = 0;
 	sol->cmdline_args = get_array_from_string(sol->cmdline_buf, file_size);
 	if (!sol->cmdline_args)
 	{
