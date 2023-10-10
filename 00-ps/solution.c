@@ -187,6 +187,7 @@ int get_cmdline_args(struct solution *sol)
 		return errno;
 	}
 
+	errno = 0;
 	long file_size = fread(sol->cmdline_buf, sizeof(char), MAX_FILE_SIZE, file);
 	if (errno) {
 		return errno;
@@ -223,6 +224,7 @@ int get_environ_args(struct solution *sol)
 		return errno;
 	}
 
+	errno = 0;
 	long file_size = fread(sol->environ_buf, sizeof(char), MAX_FILE_SIZE, file);
 	if (errno) {
 		return errno;
