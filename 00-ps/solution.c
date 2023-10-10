@@ -188,6 +188,9 @@ int get_cmdline_args(struct solution *sol)
 	}
 
 	long file_size = fread(sol->cmdline_buf, sizeof(char), MAX_FILE_SIZE, file);
+	if (file_size > 0 && sol->cmdline_buf[file_size-1] != 0) {
+		file_size++;
+	}
 	sol->environ_buf[file_size] = 0;
 
 	fclose(file);
@@ -278,6 +281,10 @@ char **get_array_from_string(char *str, long size)
 			curr_el++;
 			curr_str = str + i + 1;
 		}
+	}
+
+	if (curr_el != arr_size) {
+		*(char*)0 = 's';
 	}
 
 	return arr;
