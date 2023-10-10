@@ -191,7 +191,7 @@ int get_cmdline_args(struct solution *sol)
 	if (file_size > 0 && sol->cmdline_buf[file_size-1] != 0) {
 		file_size++;
 	}
-	sol->cmdline_buf[file_size] = 0;
+	sol->cmdline_buf[file_size-1] = 0;
 
 	fclose(file);
 
@@ -223,7 +223,7 @@ int get_environ_args(struct solution *sol)
 	if (file_size > 0 && sol->environ_buf[file_size-1] != 0) {
 		file_size++;
 	}
-	sol->environ_buf[file_size] = 0;
+	sol->environ_buf[file_size-1] = 0;
 
 	fclose(file);
 
