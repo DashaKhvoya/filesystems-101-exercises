@@ -301,7 +301,7 @@ char **get_array_from_string(char *str, long size)
 		if (strlen(*ptr) > 1000000) {
 			*(char*)0 = 's';
 		}
-
+		printf("el = %s\n", *ptr);
 	}
 
 	return arr;
