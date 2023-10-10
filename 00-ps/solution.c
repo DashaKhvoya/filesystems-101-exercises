@@ -81,17 +81,6 @@ void ps(void)
 
 		get_solution(&sol, proc_root_dir, entry->d_name);
 		if (!sol.error) {
-			printf("  exe = '%s'\n", sol.exe_path);
-
-			printf("  argv = [");
-			for (char **x = sol.cmdline_args; *x != NULL; ++x)
-				printf("'%s', ", *x);
-			printf("]\n");
-
-			printf("  envp = [");
-			for (char **x = sol.environ_args; *x != NULL; ++x)
-				printf("'%s', ", *x);
-			printf("]\n");
 			report_process(sol.pid, sol.exe_path, sol.cmdline_args, sol.environ_args);			
 		}
 
@@ -149,9 +138,6 @@ void get_solution(struct solution *sol, const char *dir, const char *name)
 		sol->error = err;
 		return;
 	}
-
-	for (char **x = sol->environ_args; *x != NULL; ++x)
-		printf("'%s', ", *x);
 
 	return;
 }
@@ -215,7 +201,6 @@ int get_cmdline_args(struct solution *sol)
 
 	fclose(file);
 
-	file_size = 0;
 	sol->cmdline_args = get_array_from_string(sol->cmdline_buf, file_size);
 	if (!sol->cmdline_args)
 	{
@@ -305,20 +290,6 @@ char **get_array_from_string(char *str, long size)
 			curr_el++;
 			curr_str = str + i + 1;
 		}
-	}
-
-	if (curr_el != arr_size) {
-		*(char*)0 = 's';
-	}
-
-	for (char** ptr = arr; *ptr != NULL; ptr++) {
-		if (*ptr - str > MAX_FILE_SIZE) {
-			*(char*)0 = 's';
-		}
-		if (strlen(*ptr) > 1000000) {
-			*(char*)0 = 's';
-		}
-		printf("el = %s\n", *ptr);
 	}
 
 	return arr;
