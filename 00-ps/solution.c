@@ -75,7 +75,6 @@ void ps(void)
 			report_process(sol.pid, sol.exe_path, sol.cmdline_args, sol.environ_args);			
 		}
 
-		errno = 0;
 		free_solution(sol);
 	}
 
@@ -106,9 +105,8 @@ struct solution get_solution(const char *dir, const char *name)
 	}
 
 	sol.proc_dir = get_full_path(dir, name);
-	if (errno)
+	if (!sol.proc_dir)
 	{
-		sol.error = errno;
 		return sol;
 	}
 
@@ -153,13 +151,13 @@ void free_solution(struct solution sol)
 int get_exe_path(struct solution *sol)
 {
 	char *exe_path = get_full_path(sol->proc_dir, "exe");
-	if (errno)
+	if (!exe_path)
 	{
-		return errno;
+		return 1;
 	}
 
 	sol->exe_path = realpath(exe_path, NULL);
-	if (errno)
+	if (!sol->exe_path)
 	{
 		report_error(exe_path, errno);
 		free(exe_path);
@@ -201,9 +199,9 @@ int get_cmdline_args(struct solution *sol)
 int get_environ_args(struct solution *sol)
 {
 	sol->environ_path = get_full_path(sol->proc_dir, "environ");
-	if (errno)
+	if (!sol->environ_path)
 	{
-		return errno;
+		return 1;
 	}
 
 	FILE *file = fopen(sol->environ_path, "rb");
@@ -213,21 +211,14 @@ int get_environ_args(struct solution *sol)
 		return errno;
 	}
 
-	long res = fread(sol->environ_buf, sizeof(char), MAX_FILE_SIZE, file);
-	if (errno)
-	{
-		fclose(file);
-		return errno;
-	}
-	long file_size = res;
+	long file_size = fread(sol->environ_buf, sizeof(char), MAX_FILE_SIZE, file);
 
 	fclose(file);
-	errno = 0;
 
 	sol->environ_args = get_array_from_string(sol->environ_buf, file_size);
-	if (sol->environ_args == NULL)
+	if (!sol->environ_args)
 	{
-		return errno;
+		return 1;
 	}
 
 	return 0;
@@ -243,11 +234,6 @@ char *get_full_path(const char *dir, const char *file)
 		return NULL;
 	}
 	sprintf(buf, "%s/%s", dir, file);
-	if (errno)
-	{
-		free(buf);
-		return NULL;
-	}
 
 	return buf;
 }
