@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define MAX_FILE_SIZE 1000
+#define MAX_FILE_SIZE 10000
 
 const char *proc_root_dir = "/proc";
 
