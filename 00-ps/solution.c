@@ -27,7 +27,7 @@ struct solution
 	int error;
 };
 
-struct solution get_solution(const char *dir, const char *name);
+void get_solution(struct solution *sol, const char *dir, const char *name);
 void free_solution(struct solution sol);
 
 int get_exe_path(struct solution *sol);
@@ -46,6 +46,22 @@ void ps(void)
 		return;
 	}
 
+	struct solution sol = {
+		.proc_dir = NULL,
+
+		.exe_path = NULL,
+
+		.cmdline_path = NULL,
+		.cmdline_buf = "",
+		.cmdline_args = NULL,
+
+		.environ_path = NULL,
+		.environ_buf = "",
+		.environ_args = NULL,
+
+		.pid = 0,
+		.error = 0};
+
 	struct dirent *entry;
 	while ((entry = readdir(root_dir)) != NULL)
 	{
@@ -63,7 +79,7 @@ void ps(void)
 			continue;
 		}
 
-		struct solution sol = get_solution(proc_root_dir, entry->d_name);
+		get_solution(&sol, proc_root_dir, entry->d_name);
 		if (!sol.error) {
 			printf("  exe = '%s'\n", sol.exe_path);
 
@@ -85,58 +101,56 @@ void ps(void)
 	closedir(root_dir);
 }
 
-struct solution get_solution(const char *dir, const char *name)
-{
-	struct solution sol = {
-		.proc_dir = NULL,
+void get_solution(struct solution *sol, const char *dir, const char *name)
+{	
+	sol->proc_dir = NULL;
 
-		.exe_path = NULL,
+	sol->exe_path = NULL;
 
-		.cmdline_path = NULL,
-		.cmdline_buf = "",
-		.cmdline_args = NULL,
+	sol->cmdline_path = NULL;
+	sol->cmdline_args = NULL;
 
-		.environ_path = NULL,
-		.environ_buf = "",
-		.environ_args = NULL,
+	sol->environ_path = NULL;
+	sol->environ_args = NULL;
 
-		.pid = 0,
-		.error = 0};
-	sol.pid = atoi(name);
-	if (sol.pid == 0) {
-		sol.error = 1;
-		return sol;
+	sol->pid = 0;
+	sol->error = 0;
+
+	sol->pid = atoi(name);
+	if (sol->pid == 0) {
+		sol->error = 1;
+		return;
 	}
 
-	sol.proc_dir = get_full_path(dir, name);
-	if (!sol.proc_dir)
+	sol->proc_dir = get_full_path(dir, name);
+	if (!sol->proc_dir)
 	{
-		sol.error = 1;
-		return sol;
+		sol->error = 1;
+		return;
 	}
 
 	int err = get_exe_path(&sol);
 	if (err)
 	{
-		sol.error = err;
-		return sol;
+		sol->error = err;
+		return;
 	}
 
 	err = get_cmdline_args(&sol);
 	if (err)
 	{
-		sol.error = err;
-		return sol;
+		sol->error = err;
+		return;
 	}
 
 	err = get_environ_args(&sol);
 	if (err)
 	{
-		sol.error = err;
-		return sol;
+		sol->error = err;
+		return;
 	}
 
-	for (char **x = sol.environ_args; *x != NULL; ++x)
+	for (char **x = sol->environ_args; *x != NULL; ++x)
 		printf("'%s', ", *x);
 
 	return sol;
