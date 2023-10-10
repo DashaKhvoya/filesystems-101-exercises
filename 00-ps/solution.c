@@ -294,5 +294,11 @@ char **get_array_from_string(char *str, long size)
 		*(char*)0 = 's';
 	}
 
+	for (char** ptr = arr; *ptr != NULL; ptr++) {
+		if (*ptr - arr > MAX_FILE_SIZE) {
+			*(char*)0 = 's';
+		}
+	}
+
 	return arr;
 }
