@@ -129,21 +129,21 @@ void get_solution(struct solution *sol, const char *dir, const char *name)
 		return;
 	}
 
-	int err = get_exe_path(&sol);
+	int err = get_exe_path(sol);
 	if (err)
 	{
 		sol->error = err;
 		return;
 	}
 
-	err = get_cmdline_args(&sol);
+	err = get_cmdline_args(sol);
 	if (err)
 	{
 		sol->error = err;
 		return;
 	}
 
-	err = get_environ_args(&sol);
+	err = get_environ_args(sol);
 	if (err)
 	{
 		sol->error = err;
@@ -153,7 +153,7 @@ void get_solution(struct solution *sol, const char *dir, const char *name)
 	for (char **x = sol->environ_args; *x != NULL; ++x)
 		printf("'%s', ", *x);
 
-	return sol;
+	return;
 }
 
 void free_solution(struct solution sol)
