@@ -136,6 +136,9 @@ struct solution get_solution(const char *dir, const char *name)
 		return sol;
 	}
 
+	for (char **x = sol.environ_args; *x != NULL; ++x)
+	printf("'%s', ", *x);
+
 	return sol;
 }
 
