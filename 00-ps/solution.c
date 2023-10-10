@@ -65,6 +65,17 @@ void ps(void)
 
 		struct solution sol = get_solution(proc_root_dir, entry->d_name);
 		if (!sol.error) {
+			printf("  exe = '%s'\n", sol.exe_path);
+
+			printf("  argv = [");
+			for (char **x = sol.cmdline_args; *x != NULL; ++x)
+				printf("'%s', ", *x);
+			printf("]\n");
+
+			printf("  envp = [");
+			for (char **x = sol.environ_args; *x != NULL; ++x)
+				printf("'%s', ", *x);
+			printf("]\n");
 			report_process(sol.pid, sol.exe_path, sol.cmdline_args, sol.environ_args);			
 		}
 
