@@ -173,32 +173,26 @@ int get_exe_path(struct solution *sol)
 int get_cmdline_args(struct solution *sol)
 {
 	sol->cmdline_path = get_full_path(sol->proc_dir, "cmdline");
-	if (errno)
+	if (!sol->cmdline_path)
 	{
-		return errno;
+		return 1;
 	}
 
 	FILE *file = fopen(sol->cmdline_path, "rb");
-	if (errno)
+	if (!file)
 	{
 		report_error(sol->cmdline_path, errno);
 		return errno;
 	}
 
-	long res = fread(sol->cmdline_buf, sizeof(char), MAX_FILE_SIZE, file);
-	if (errno)
-	{
-		fclose(file);
-		return errno;
-	}
-	long file_size = res;
+	long file_size = fread(sol->cmdline_buf, sizeof(char), MAX_FILE_SIZE, file);
 
 	fclose(file);
 
 	sol->cmdline_args = get_array_from_string(sol->cmdline_buf, file_size);
-	if (errno)
+	if (!sol->cmdline_args)
 	{
-		return errno;
+		return 1;
 	}
 
 	return 0;
