@@ -71,11 +71,9 @@ void ps(void)
 		if (sol.environ_args == NULL) {
 			sol.environ_args = (char**)calloc(1, sizeof(char*));
 		}
-		if (sol.cmdline_args == NULL) {
-			sol.cmdline_args = (char**)calloc(1, sizeof(char*));
+		if (sol.cmdline_args != NULL) {
+			report_process(sol.pid, sol.exe_path, sol.cmdline_args, sol.environ_args);			
 		}
-		report_process(sol.pid, sol.exe_path, sol.cmdline_args, sol.environ_args);
-		
 
 		errno = 0;
 		free_solution(sol);
