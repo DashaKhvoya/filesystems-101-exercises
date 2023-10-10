@@ -49,8 +49,7 @@ void ps(void)
 	struct dirent *entry;
 	while ((entry = readdir(root_dir)) != NULL)
 	{
-		/*
-		if (entry->d_type != DT_)
+		if (entry->d_type != DT_DIR)
 		{
 			continue;
 		}
@@ -66,18 +65,17 @@ void ps(void)
 		if (!is_pid_name)
 		{
 			continue;
-		}*/
+		}
 
 		struct solution sol = get_solution(proc_root_dir, entry->d_name);
-		if (sol.error != 666 && sol.error != 777)
-		{
-			if (sol.environ_args == NULL) {
-				sol.environ_args = (char**)calloc(1, sizeof(char*));
-			}
-			report_process(sol.pid, sol.exe_path, sol.cmdline_args, sol.environ_args);
-		} else {
-			printf("error = %d\n", sol.error);
+		if (sol.environ_args == NULL) {
+			sol.environ_args = (char**)calloc(1, sizeof(char*));
 		}
+		if (sol.cmdline_args == NULL) {
+			sol.cmdline_args = (char**)calloc(1, sizeof(char*));
+		}
+		report_process(sol.pid, sol.exe_path, sol.cmdline_args, sol.environ_args);
+		
 
 		errno = 0;
 		free_solution(sol);
@@ -237,7 +235,7 @@ int get_environ_args(struct solution *sol)
 	sol->environ_args = get_array_from_string(sol->environ_buf, file_size);
 	if (sol->environ_args == NULL)
 	{
-		return 777;
+		return errno;
 	}
 
 	return 0;
