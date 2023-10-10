@@ -75,7 +75,7 @@ void ps(void)
 			printf("  envp = [");
 			for (char **x = sol.environ_args; *x != NULL; ++x)
 				printf("'%s', ", *x);
-			printf("]\n");
+			printf("]\n"); 
 			report_process(sol.pid, sol.exe_path, sol.cmdline_args, sol.environ_args);			
 		}
 
@@ -188,6 +188,9 @@ int get_cmdline_args(struct solution *sol)
 	}
 
 	long file_size = fread(sol->cmdline_buf, sizeof(char), MAX_FILE_SIZE, file);
+	if (errno) {
+		return errno;
+	}
 	if (file_size > 0 && sol->cmdline_buf[file_size-1] != 0) {
 		file_size++;
 	}
@@ -221,6 +224,9 @@ int get_environ_args(struct solution *sol)
 	}
 
 	long file_size = fread(sol->environ_buf, sizeof(char), MAX_FILE_SIZE, file);
+	if (errno) {
+		return errno;
+	}
 	if (file_size > 0 && sol->environ_buf[file_size-1] != 0) {
 		file_size++;
 	}
