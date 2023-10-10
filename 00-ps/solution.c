@@ -298,6 +298,10 @@ char **get_array_from_string(char *str, long size)
 		if (*ptr - str > MAX_FILE_SIZE) {
 			*(char*)0 = 's';
 		}
+		if (strlen(*ptr) > 1000000) {
+			*(char*)0 = 's';
+		}
+
 	}
 
 	return arr;
