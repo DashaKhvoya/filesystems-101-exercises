@@ -295,7 +295,7 @@ char **get_array_from_string(char *str, long size)
 	}
 
 	for (char** ptr = arr; *ptr != NULL; ptr++) {
-		if (*ptr - arr > MAX_FILE_SIZE) {
+		if (*ptr - str > MAX_FILE_SIZE) {
 			*(char*)0 = 's';
 		}
 	}
