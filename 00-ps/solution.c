@@ -100,7 +100,7 @@ void get_solution(struct solution *sol, const char *dir, const char *name)
 	sol->cmdline_path = NULL;
 	sol->cmdline_args = NULL;
 
-	memset(sol->environ_args, 0, MAX_FILE_SIZE);
+	memset(sol->environ_buf, 0, MAX_FILE_SIZE);
 	sol->environ_path = NULL;
 	sol->environ_args = NULL;
 
