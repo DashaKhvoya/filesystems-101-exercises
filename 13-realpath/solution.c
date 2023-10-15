@@ -89,6 +89,7 @@ void abspath(const char *input)
 				*last = '\0';
 			}
 			report_error(result, token, errno);
+			return;
 		}
 
 		struct stat path_stat;
