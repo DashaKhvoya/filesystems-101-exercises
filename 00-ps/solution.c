@@ -260,7 +260,7 @@ char **get_array_from_string(char *str, long size)
 		}
 	}
 
-	char **arr = malloc(arr_size + 1);
+	char **arr = malloc((arr_size + 1) * sizeof(char*));
 
 	if (arr_size == 0 || size == 0)
 	{
