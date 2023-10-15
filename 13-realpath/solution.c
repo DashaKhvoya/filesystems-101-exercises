@@ -25,7 +25,7 @@ void abspath(const char *input)
 
 		char tmp[2*PATH_MAX] = "";
 		char full_path[PATH_MAX] = "";
-		snprintf(tmp, PATH_MAX, "%s/%s", result, token);
+		snprintf(tmp, 2*PATH_MAX, "%s/%s", result, token);
 		realpath(tmp, full_path);
 		if (errno)
 		{
