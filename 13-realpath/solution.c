@@ -83,6 +83,20 @@ void abspath(const char *input)
 
 		char parent[PATH_MAX] = "";
 		char tmp_path[2 * PATH_MAX] = "";
+		
+		struct stat path_stat;
+		lstat(result, &path_stat);
+		if (S_ISDIR(path_stat.st_mode)) {
+			if (strlen(result) == 0)
+			{
+				report_error("/", token, ENOTDIR);
+			}
+			else
+			{
+				report_error(result, token, ENOTDIR);
+			}
+			return;
+		}
 		snprintf(tmp_path, 2 * PATH_MAX, "%s/%s", result, token);
 		// printf("tmp path: <%s>\n", tmp_path);
 
