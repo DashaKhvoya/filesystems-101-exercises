@@ -85,21 +85,18 @@ void abspath(const char *input)
 		char tmp_path[2 * PATH_MAX] = "";
 		
 		strcat(result, "/");
-		struct stat path_stat;
-		lstat(result, &path_stat);
-		if (!S_ISDIR(path_stat.st_mode)) 
-		{
-			char *last = strrchr(result, '/');
-			*last = '\0';
-			report_error(result, token, ENOTDIR);
-			return;
-		}
 		snprintf(tmp_path, 2 * PATH_MAX, "%s%s", result, token);
 		// printf("tmp path: <%s>\n", tmp_path);
 
+		struct stat path_stat;
 		lstat(tmp_path, &path_stat);
 		if (errno)
 		{
+			if (strlen(result) > 1) 
+			{
+				char *last = strrchr(result, '/');
+				*last = '\0';
+			}
 			report_error(result, token, errno);
 			return;
 		}
