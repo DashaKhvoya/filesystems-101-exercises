@@ -84,46 +84,21 @@ void abspath(const char *input)
 		char parent[PATH_MAX] = "";
 		char tmp_path[2 * PATH_MAX] = "";
 		
+		strcat(result, "/");
 		struct stat path_stat;
 		lstat(result, &path_stat);
-		if (errno) 
-		{
-			if (strlen(result) == 0)
-			{
-				report_error("/", token, errno);
-			}
-			else
-			{
-				report_error(result, token, errno);
-			}
-			return;
-		}
 		if (!S_ISDIR(path_stat.st_mode)) 
 		{
-			if (strlen(result) == 0)
-			{
-				report_error("/", token, ENOTDIR);
-			}
-			else
-			{
-				report_error(result, token, ENOTDIR);
-			}
+			report_error(result, token, ENOTDIR);
 			return;
 		}
-		snprintf(tmp_path, 2 * PATH_MAX, "%s/%s", result, token);
+		snprintf(tmp_path, 2 * PATH_MAX, "%s%s", result, token);
 		// printf("tmp path: <%s>\n", tmp_path);
 
 		lstat(tmp_path, &path_stat);
 		if (errno)
 		{
-			if (strlen(result) == 0)
-			{
-				report_error("/", token, errno);
-			}
-			else
-			{
-				report_error(result, token, errno);
-			}
+			report_error(result, token, errno);
 			return;
 		}
 
@@ -136,14 +111,7 @@ void abspath(const char *input)
 			ssize_t link_len = readlink(result, link, PATH_MAX - 1);
 			if (errno)
 			{
-				if (strlen(parent) == 0)
-				{
-					report_error("/", token, errno);
-				}
-				else
-				{
-					report_error(parent, token, errno);
-				}
+				report_error(parent, token, errno);	
 				return;
 			}
 			link[link_len] = '\0';
