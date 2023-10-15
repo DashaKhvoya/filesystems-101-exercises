@@ -261,6 +261,9 @@ char **get_array_from_string(char *str, long size)
 	}
 
 	char **arr = malloc((arr_size + 1) * sizeof(char*));
+	for (int i = 0; i < arr_size + 1; i++) {
+		arr[i] = NULL;
+	}
 
 	if (arr_size == 0 || size == 0)
 	{
