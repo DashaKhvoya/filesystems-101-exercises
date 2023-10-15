@@ -92,7 +92,7 @@ void abspath(const char *input)
 		}
 
 		struct stat path_stat;
-		if (fstatat(fd, token, &path_stat, 0) < 0) {
+		if (fstatat(fd, token, &path_stat, AT_SYMLINK_NOFOLLOW) < 0) {
     		if (strlen(result) > 1)
 			{
 				char *last = strrchr(result, '/');
