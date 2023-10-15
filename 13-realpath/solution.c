@@ -9,13 +9,12 @@
 
 void abspath(const char *input)
 {
-	char *path = strdup(input);
-
-	if (path == NULL || strlen(path) < 1)
-	{
+	if (input == NULL || strlen(input) < 1) {
 		return;
 	}
 
+	char *path = strdup(input);
+	char *copy = path;
 	char result[PATH_MAX] = "";
 
 	char *token, *saveptr;
@@ -30,7 +29,7 @@ void abspath(const char *input)
 		if (errno)
 		{
 			report_error(result, token, errno);
-			free(path);
+			free(copy);
 			return;
 		}
 
@@ -44,6 +43,6 @@ void abspath(const char *input)
 		result[strlen(result)] = '/';
 	}
 
-	free(path);
+	free(copy);
 	report_path(result);
 }
