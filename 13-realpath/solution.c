@@ -141,7 +141,7 @@ void abspath(const char *input)
 					link[link_len] = '/';
 					link[link_len + 1] = '\0';
 				}
-				strncat(link, current, PATH_MAX);
+				strcat(link, current);
 			}
 
 			strncpy(current, link, PATH_MAX);
