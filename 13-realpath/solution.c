@@ -69,7 +69,10 @@ void abspath(const char *input)
 			{
 				link[link_len] = '\0';
 				char *last = strrchr(link, '/');
-				*last = '\0';
+				if (last != NULL) 
+				{
+					*last = '\0';
+				}
 			}
 
 			snprintf(tmp_path, 2 * PATH_MAX, "%s/%s", result, link);
