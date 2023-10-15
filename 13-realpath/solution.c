@@ -86,7 +86,20 @@ void abspath(const char *input)
 		
 		struct stat path_stat;
 		lstat(result, &path_stat);
-		if (S_ISDIR(path_stat.st_mode)) {
+		if (errno) 
+		{
+			if (strlen(result) == 0)
+			{
+				report_error("/", token, errno);
+			}
+			else
+			{
+				report_error(result, token, errno);
+			}
+			return;
+		}
+		if (!S_ISDIR(path_stat.st_mode)) 
+		{
 			if (strlen(result) == 0)
 			{
 				report_error("/", token, ENOTDIR);
