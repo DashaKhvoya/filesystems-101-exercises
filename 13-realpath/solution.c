@@ -89,7 +89,7 @@ void abspath(const char *input)
 		lstat(result, &path_stat);
 		if (!S_ISDIR(path_stat.st_mode)) 
 		{
-			char *last = strchr(result, '/');
+			char *last = strrchr(result, '/');
 			*last = '\0';
 			report_error(result, token, ENOTDIR);
 			return;
