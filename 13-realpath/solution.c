@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <assert.h>
 
 void abspath(const char *input)
 {
@@ -63,19 +64,32 @@ void abspath(const char *input)
 
 			if (link[0] == '/')
 			{
-				result[0] = '\0';
+				strncpy(tmp_path, link, PATH_MAX);
 			}
-			if (link_len > 1)
+			else if (!strcmp(link, "."))
+			{
+				strncpy(tmp_path, result, PATH_MAX);
+			}
+			else if (!strcmp(link, ".."))
+			{
+				char *last = strrchr(result, '/');
+				*last = '\0';
+				strncpy(tmp_path, result, PATH_MAX);
+			}
+			else if (link_len > 0)
 			{
 				link[link_len] = '\0';
 				char *last = strrchr(link, '/');
-				if (last != NULL) 
+				if (last != NULL)
 				{
 					*last = '\0';
 				}
+				snprintf(tmp_path, 2 * PATH_MAX, "%s/%s", result, link);
 			}
-
-			snprintf(tmp_path, 2 * PATH_MAX, "%s/%s", result, link);
+			else
+			{
+				assert("read link len = 0");
+			}
 		}
 
 		strncpy(result, tmp_path, PATH_MAX);
