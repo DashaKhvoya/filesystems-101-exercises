@@ -9,6 +9,13 @@
 #include <unistd.h>
 #include <assert.h>
 
+#include <sys/param.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 void abspath(const char *input)
 {
 	if (input == NULL || strlen(input) < 1)
@@ -16,16 +23,50 @@ void abspath(const char *input)
 		return;
 	}
 
-	char *path = strdup(input);
-	char *copy = path;
+	// Result
 	char result[PATH_MAX] = "";
+	// Link path
 	char link[PATH_MAX] = "";
+	char current[PATH_MAX] = "";
 
-	char *token, *saveptr;
-	while ((token = strtok_r(path, "/", &saveptr)) != NULL)
+	char token[PATH_MAX] = "";
+	char *next_token_ptr = NULL;
+
+	if (input[1] == '\0')
 	{
-		path = NULL;
+		report_path(input);
+		return;
+	}
 
+	// Setup current
+	if (input[0] == '/')
+	{
+		strncpy(current, input + 1, PATH_MAX);
+	}
+	else
+	{
+		strncpy(current, input, PATH_MAX);
+	}
+
+	while (strlen(current))
+	{
+		next_token_ptr = strchr(current, '/');
+		if (next_token_ptr != NULL)
+		{
+			*next_token_ptr = '\0';
+			strncpy(token, current, PATH_MAX);
+			strncpy(current, next_token_ptr + 1, PATH_MAX);
+		}
+		else
+		{
+			strncpy(token, current, PATH_MAX);
+			current[0] = '\0';
+		}
+
+		if (token[0] == '\0')
+		{
+			continue;
+		}
 		if (!strcmp(token, "."))
 		{
 			continue;
@@ -40,61 +81,72 @@ void abspath(const char *input)
 			continue;
 		}
 
+		char parent[PATH_MAX] = "";
 		char tmp_path[2 * PATH_MAX] = "";
 		snprintf(tmp_path, 2 * PATH_MAX, "%s/%s", result, token);
+		// printf("tmp path: <%s>\n", tmp_path);
 
 		struct stat path_stat;
 		lstat(tmp_path, &path_stat);
 		if (errno)
 		{
-			report_error(result, token, errno);
-			free(copy);
-			return;
-		}
-		if (S_ISLNK(path_stat.st_mode))
-		{
-			// loop?
-			ssize_t link_len = readlink(tmp_path, link, PATH_MAX - 1);
-			if (errno)
+			if (strlen(result) == 0)
 			{
-				report_error(result, token, errno);
-				free(copy);
-				return;
-			}
-
-			link[link_len] = '\0';
-			if (link[0] == '/')
-			{
-				char *last = strrchr(link, '/');
-				*last = '\0';
-				
-				strncpy(tmp_path, link, PATH_MAX);
-			}
-			else if (!strcmp(link, "."))
-			{
-				strncpy(tmp_path, result, PATH_MAX);
-			}
-			else if (!strcmp(link, ".."))
-			{
-				if (strlen(result) > 0) 
-				{
-					char *last = strrchr(result, '/');
-					*last = '\0';
-				}
-				strncpy(tmp_path, result, PATH_MAX);
+				report_error("/", token, errno);
 			}
 			else
 			{
- 				char *last = strrchr(link, '/');
-				if (last != NULL)
-				{
-					*last = '\0';
-				}
-				snprintf(tmp_path, 2 * PATH_MAX, "%s/%s", result, link);
+				report_error(result, token, errno);
 			}
+			return;
 		}
 
+		strncpy(parent, result, PATH_MAX);
 		strncpy(result, tmp_path, PATH_MAX);
+		// printf("result now <%s>\n", result);
+
+		if (S_ISLNK(path_stat.st_mode))
+		{
+			ssize_t link_len = readlink(result, link, PATH_MAX - 1);
+			if (errno)
+			{
+				if (strlen(parent) == 0)
+				{
+					report_error("/", token, errno);
+				}
+				else
+				{
+					report_error(parent, token, errno);
+				}
+				return;
+			}
+			link[link_len] = '\0';
+			// printf("readed line <%s>\n", link);
+
+			if (link[0] == '/')
+			{
+				result[0] = '\0';
+			}
+			else if (strlen(result) > 1)
+			{
+				char *last = strrchr(result, '/');
+				*last = '\0';
+			}
+
+			// printf("current in link: <%s>\n", current);
+			if (strlen(current) > 0)
+			{
+				if (link[link_len - 1] != '/')
+				{
+					link[link_len] = '/';
+					link[link_len + 1] = '\0';
+				}
+				strlcat(link, current, PATH_MAX);
+			}
+
+			strncpy(current, link, PATH_MAX);
+			// printf("current at the end <%s>, result <%s>\n", current, result);
+		}
 	}
 
 	struct stat path_stat;
@@ -105,6 +157,5 @@ void abspath(const char *input)
 		result[strlen(result)] = '/';
 	}
 
-	free(copy);
 	report_path(result);
 }
