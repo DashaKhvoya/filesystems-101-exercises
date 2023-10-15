@@ -62,8 +62,12 @@ void abspath(const char *input)
 				return;
 			}
 
+			link[link_len] = '\0';
 			if (link[0] == '/')
 			{
+				char *last = strrchr(link, '/');
+				*last = '\0';
+				
 				strncpy(tmp_path, link, PATH_MAX);
 			}
 			else if (!strcmp(link, "."))
@@ -72,23 +76,21 @@ void abspath(const char *input)
 			}
 			else if (!strcmp(link, ".."))
 			{
-				char *last = strrchr(result, '/');
-				*last = '\0';
+				if (strlen(result) > 0) 
+				{
+					char *last = strrchr(result, '/');
+					*last = '\0';
+				}
 				strncpy(tmp_path, result, PATH_MAX);
 			}
-			else if (link_len > 0)
+			else (link_len > 0)
 			{
-				link[link_len] = '\0';
-				char *last = strrchr(link, '/');
+ 				char *last = strrchr(link, '/');
 				if (last != NULL)
 				{
 					*last = '\0';
 				}
 				snprintf(tmp_path, 2 * PATH_MAX, "%s/%s", result, link);
-			}
-			else
-			{
-				assert("read link len = 0");
 			}
 		}
 
