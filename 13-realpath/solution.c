@@ -55,7 +55,7 @@ void abspath(const char *input)
 		{
 			*next_token_ptr = '\0';
 			strncpy(token, current, PATH_MAX);
-			strncpy(current, next_token_ptr + 1, PATH_MAX);
+			memmove(current, next_token_ptr + 1, strlen(next_token_ptr+1) + 1);
 		}
 		else
 		{
