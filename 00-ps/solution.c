@@ -7,7 +7,7 @@
 
 #define MAX_FILE_SIZE 4096 * 100
 
-const char *proc_root_dir = "/proc";
+static const char *proc_root_dir = "/proc";
 
 struct solution
 {
@@ -27,15 +27,15 @@ struct solution
 	int error;
 };
 
-void get_solution(struct solution *sol, const char *dir, const char *name);
-void free_solution(struct solution sol);
+static void get_solution(struct solution *sol, const char *dir, const char *name);
+static void free_solution(struct solution sol);
 
-int get_exe_path(struct solution *sol);
-int get_cmdline_args(struct solution *sol);
-int get_environ_args(struct solution *sol);
+static int get_exe_path(struct solution *sol);
+static int get_cmdline_args(struct solution *sol);
+static int get_environ_args(struct solution *sol);
 
-char *get_full_path(const char *dir, const char *file);
-char **get_array_from_string(char *str, long size);
+static char *get_full_path(const char *dir, const char *file);
+static char **get_array_from_string(char *str, long size);
 
 void ps(void)
 {
@@ -162,7 +162,7 @@ int get_exe_path(struct solution *sol)
 	char *exe_path = get_full_path(sol->proc_dir, "exe");
 	if (!exe_path)
 	{
-		return 1;
+		return errno;
 	}
 
 	sol->exe_path = realpath(exe_path, NULL);
@@ -182,7 +182,7 @@ int get_cmdline_args(struct solution *sol)
 	sol->cmdline_path = get_full_path(sol->proc_dir, "cmdline");
 	if (!sol->cmdline_path)
 	{
-		return 1;
+		return errno;
 	}
 
 	FILE *file = fopen(sol->cmdline_path, "rb");
@@ -194,7 +194,7 @@ int get_cmdline_args(struct solution *sol)
 
 	long file_size = fread(sol->cmdline_buf, sizeof(char), MAX_FILE_SIZE, file);
 	if (ferror(file)) {
-		return 1;
+		return ferror(file);
 	}
 
 	fclose(file);
@@ -202,7 +202,7 @@ int get_cmdline_args(struct solution *sol)
 	sol->cmdline_args = get_array_from_string(sol->cmdline_buf, file_size);
 	if (!sol->cmdline_args)
 	{
-		return 1;
+		return errno;
 	}
 
 	return 0;
@@ -213,7 +213,7 @@ int get_environ_args(struct solution *sol)
 	sol->environ_path = get_full_path(sol->proc_dir, "environ");
 	if (!sol->environ_path)
 	{
-		return 1;
+		return errno;
 	}
 
 	FILE *file = fopen(sol->environ_path, "rb");
@@ -225,7 +225,7 @@ int get_environ_args(struct solution *sol)
 
 	long file_size = fread(sol->environ_buf, sizeof(char), MAX_FILE_SIZE, file);
 	if (ferror(file)) {
-		return 1;
+		return ferror(file);
 	}
 
 	fclose(file);
@@ -233,7 +233,7 @@ int get_environ_args(struct solution *sol)
 	sol->environ_args = get_array_from_string(sol->environ_buf, file_size);
 	if (!sol->environ_args)
 	{
-		return 1;
+		return errno;
 	}
 
 	return 0;
@@ -243,11 +243,7 @@ char *get_full_path(const char *dir, const char *file)
 {
 	// Consider '/' and NULL at the end
 	size_t full_size = strlen(dir) + strlen(file) + 2;
-	char *buf = (char *)calloc(full_size, sizeof(char));
-	if (!buf)
-	{
-		return NULL;
-	}
+	char *buf = malloc(full_size);
 	sprintf(buf, "%s/%s", dir, file);
 
 	return buf;
@@ -264,11 +260,8 @@ char **get_array_from_string(char *str, long size)
 		}
 	}
 
-	char **arr = (char **)calloc(arr_size + 1, sizeof(char *));
-	if (!arr)
-	{
-		return NULL;
-	}
+	char **arr = malloc(arr_size + 1);
+
 	if (arr_size == 0 || size == 0)
 	{
 		return arr;
