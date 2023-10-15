@@ -2,19 +2,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <assert.h>
-
-#include <sys/param.h>
-#include <sys/stat.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 
 void abspath(const char *input)
 {
@@ -87,19 +81,28 @@ void abspath(const char *input)
 		strcat(result, "/");
 		snprintf(tmp_path, 2 * PATH_MAX, "%s%s", result, token);
 		// printf("tmp path: <%s>\n", tmp_path);
-
-		struct stat path_stat;
-		lstat(tmp_path, &path_stat);
-		if (errno)
-		{
+		int fd = open(result, O_RDONLY | O_DIRECTORY);
+		if (fd == -1) {
 			if (strlen(result) > 1) 
 			{
 				char *last = strrchr(result, '/');
 				*last = '\0';
 			}
 			report_error(result, token, errno);
+		}
+
+		struct stat path_stat;
+		if (fstatat(fd, token, &path_stat, 0) < 0) {
+    		if (strlen(result) > 1)
+			{
+				char *last = strrchr(result, '/');
+				*last = '\0';
+			}
+			report_error(result, token, errno);
+			close(fd);
 			return;
 		}
+		close(fd);
 
 		strncpy(parent, result, PATH_MAX);
 		strncpy(result, tmp_path, PATH_MAX);
