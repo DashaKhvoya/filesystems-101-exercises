@@ -83,7 +83,7 @@ void abspath(const char *input)
 				}
 				strncpy(tmp_path, result, PATH_MAX);
 			}
-			else (link_len > 0)
+			else
 			{
  				char *last = strrchr(link, '/');
 				if (last != NULL)
