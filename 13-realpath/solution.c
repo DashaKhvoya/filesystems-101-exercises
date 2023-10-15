@@ -100,7 +100,6 @@ void abspath(const char *input)
 		snprintf(tmp_path, 2 * PATH_MAX, "%s/%s", result, token);
 		// printf("tmp path: <%s>\n", tmp_path);
 
-		struct stat path_stat;
 		lstat(tmp_path, &path_stat);
 		if (errno)
 		{
