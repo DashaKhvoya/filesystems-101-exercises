@@ -78,6 +78,14 @@ void abspath(const char *input)
 				char *last = strrchr(result, '/');
 				*last = '\0';
 			}
+			
+			int new_result_fd = openat(result_fd, token, O_DIRECTORY | O_RDONLY);
+			int err = errno;
+			close(result_fd);
+			if (new_result_fd == -1) {
+				report_error(result, token, err);
+			}
+			result_fd = new_result_fd;
 			continue;
 		}
 
@@ -151,9 +159,10 @@ void abspath(const char *input)
 		}
 		
 		int new_result_fd = openat(result_fd, token, O_DIRECTORY | O_RDONLY);
+		int err = errno;
 		close(result_fd);
-		if (result_fd == -1) {
-			report_error(parent, token, errno);
+		if (new_result_fd == -1) {
+			report_error(parent, token, err);
 			return;
 		}
 		
@@ -161,7 +170,7 @@ void abspath(const char *input)
 	}
 
 	struct stat path_stat;
-	stat(result, &path_stat);
+	fstat(result_fd, &path_stat);
 	if (strlen(result) == 0 || S_ISDIR(path_stat.st_mode))
 	{
 		result[strlen(result) + 1] = '\0';
