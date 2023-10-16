@@ -19,7 +19,12 @@ void abspath(const char *input)
 
 	// Result
 	char result[PATH_MAX] = "";
-	// Link path
+	int result_fd = open("/", O_DIRECTORY | O_RDONLY);
+	if (result_fd == -1) {
+		report_error("/", "", errno);
+		return;
+	}
+	// Link pat
 	char link[PATH_MAX] = "";
 	char current[PATH_MAX] = "";
 
@@ -29,6 +34,7 @@ void abspath(const char *input)
 	if (input[1] == '\0')
 	{
 		report_path(input);
+		close(result_fd);
 		return;
 	}
 
@@ -81,29 +87,27 @@ void abspath(const char *input)
 		strcat(result, "/");
 		snprintf(tmp_path, 2 * PATH_MAX, "%s%s", result, token);
 		// printf("tmp path: <%s>\n", tmp_path);
-		int fd = open(result, O_RDONLY | O_DIRECTORY);
-		if (fd == -1) {
-			if (strlen(result) > 1) 
-			{
-				char *last = strrchr(result, '/');
-				*last = '\0';
-			}
-			report_error(result, token, errno);
-			return;
-		}
-
+		//int tmp_fd = openat(result_fd, token, O_RDONLY | O_DIRECTORY);
+		//if (tmp_fd == -1) {
+		//	if (strlen(result) > 1) 
+		//	{
+		//		char *last = strrchr(result, '/');
+		//		*last = '\0';
+		//	}
+		//	report_error(result, token, errno);
+		//	return;
+		//}
 		struct stat path_stat;
-		if (fstatat(fd, token, &path_stat, AT_SYMLINK_NOFOLLOW) < 0) {
+		if (fstatat(result_fd, token, &path_stat, AT_SYMLINK_NOFOLLOW) < 0) {
     		if (strlen(result) > 1)
 			{
 				char *last = strrchr(result, '/');
 				*last = '\0';
 			}
 			report_error(result, token, errno);
-			close(fd);
+			close(result_fd);
 			return;
 		}
-		close(fd);
 
 		strncpy(parent, result, PATH_MAX);
 		strncpy(result, tmp_path, PATH_MAX);
@@ -111,10 +115,11 @@ void abspath(const char *input)
 
 		if (S_ISLNK(path_stat.st_mode))
 		{
-			ssize_t link_len = readlink(result, link, PATH_MAX - 1);
+			ssize_t link_len = readlinkat(result_fd, token, link, PATH_MAX - 1);
 			if (errno)
 			{
-				report_error(parent, token, errno);	
+				report_error(parent, token, errno);
+				close(result_fd);
 				return;
 			}
 			link[link_len] = '\0';
@@ -144,6 +149,12 @@ void abspath(const char *input)
 			strncpy(current, link, PATH_MAX);
 			// printf("current at the end <%s>, result <%s>\n", current, result);
 		}
+		close(result_fd);
+		result_fd = openat(parent, token, O_DIRECTORY | O_RDONLY);
+		if (result_fd == -1) {
+			report_error(parent, token, errno);
+			return;
+		}
 	}
 
 	struct stat path_stat;
@@ -154,5 +165,6 @@ void abspath(const char *input)
 		result[strlen(result)] = '/';
 	}
 
+	close(result_fd);
 	report_path(result);
 }
