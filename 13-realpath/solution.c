@@ -93,8 +93,6 @@ void abspath(const char *input)
 			continue;
 		}
 
-		snprintf(tmp, 2*PATH_MAX, "%s/", result);
-		strncpy(result, tmp, PATH_MAX);
 		int new_result_fd = openat(result_fd, token, O_RDONLY | O_NOFOLLOW);
 		if (new_result_fd == -1) 
 		{
@@ -149,7 +147,7 @@ void abspath(const char *input)
 			}
 		}
 		
-		snprintf(tmp, 2*PATH_MAX, "%s%s", result, token);
+		snprintf(tmp, 2*PATH_MAX, "%s/%s", result, token);
 		strncpy(result, tmp, PATH_MAX);
 		close(result_fd);
 		result_fd = new_result_fd;
