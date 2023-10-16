@@ -95,9 +95,11 @@ void abspath(const char *input)
 
 		snprintf(tmp, 2*PATH_MAX, "%s/", result);
 		strncpy(result, tmp, PATH_MAX);
-		int new_result_fd = openat(result_fd, token, O_DIRECTORY | O_RDONLY | O_NOFOLLOW);
+		int new_result_fd = openat(result_fd, token, O_RDONLY | O_NOFOLLOW);
 		if (new_result_fd == -1) 
 		{
+			//printf("result <%s>, token <%s>\n", result, token);
+			//printf("errno = %d\n", errno);
 			if (errno == ELOOP) // Ссылка
 			{
 				ssize_t link_len = readlinkat(result_fd, token, link, PATH_MAX - 1);
@@ -120,14 +122,6 @@ void abspath(const char *input)
 				}
 				else if (strlen(result) > 1)
 				{
-					int new_result_fd = openat(result_fd, "..", O_DIRECTORY | O_RDONLY);
-					if (new_result_fd == -1) {
-						close(result_fd);
-						return;
-					}
-					close(result_fd);
-					result_fd = new_result_fd;
-
 					char *last = strrchr(result, '/');
 					*last = '\0';
 				}
@@ -146,28 +140,8 @@ void abspath(const char *input)
 
 				strncpy(current, link, PATH_MAX);
 				continue;
-			} else if (errno == ENOTDIR) // Файл
-			{
-				if (strlen(current) > 0) 
-				{
-					report_error(result, token, errno);
-					close(result_fd);
-					return;
-				}
-				
-				new_result_fd = openat(result_fd, token, O_RDONLY);
-				if (new_result_fd == -1) {
-					report_error(result, token, errno);
-					close(result_fd);
-					return;
-				}
-				close(result_fd);
-				result_fd = new_result_fd;
-				
-				snprintf(tmp, 2*PATH_MAX, "%s%s", result, token);
-				strncpy(result, tmp, PATH_MAX);
-				continue;
-			} else 
+			}
+			else 
 			{
 				report_error(result, token, errno);
 				close(result_fd);
