@@ -17,6 +17,7 @@ void abspath(const char *input)
 		return;
 	}
 
+	char tmp[2*PATH_MAX] = "";
 	// Result
 	char result[PATH_MAX] = "";
 	int result_fd = open("/", O_RDONLY | O_DIRECTORY);
@@ -92,7 +93,8 @@ void abspath(const char *input)
 			continue;
 		}
 
-		strcat(result, "/");
+		snprintf(tmp, PATH_MAX, "%s/", result);
+		strncpy(result, tmp, PATH_MAX);
 		int new_result_fd = openat(result_fd, token, O_DIRECTORY | O_RDONLY | O_NOFOLLOW);
 		if (new_result_fd == -1) 
 		{
@@ -137,7 +139,9 @@ void abspath(const char *input)
 						link[link_len] = '/';
 						link[link_len + 1] = '\0';
 					}
-					strcat(link, current);
+					
+					snprintf(tmp, PATH_MAX, "%s%s", link, current);
+					strncpy(link, tmp, PATH_MAX);
 				}
 
 				strncpy(current, link, PATH_MAX);
@@ -160,7 +164,8 @@ void abspath(const char *input)
 				close(result_fd);
 				result_fd = new_result_fd;
 				
-				strcat(result, token);
+				snprintf(tmp, PATH_MAX, "%s%s", result, token);
+				strncpy(result, tmp, PATH_MAX);
 				continue;
 			} else 
 			{
@@ -170,7 +175,8 @@ void abspath(const char *input)
 			}
 		}
 		
-		strcat(result, token);
+		snprintf(tmp, PATH_MAX, "%s%s", result, token);
+		strncpy(result, tmp, PATH_MAX);
 		close(result_fd);
 		result_fd = new_result_fd;
 	}
