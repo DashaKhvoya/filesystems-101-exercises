@@ -149,12 +149,15 @@ void abspath(const char *input)
 			strncpy(current, link, PATH_MAX);
 			// printf("current at the end <%s>, result <%s>\n", current, result);
 		}
+		
+		int new_result_fd = openat(result_fd, token, O_DIRECTORY | O_RDONLY);
 		close(result_fd);
-		result_fd = openat(result_fd, token, O_DIRECTORY | O_RDONLY);
 		if (result_fd == -1) {
 			report_error(parent, token, errno);
 			return;
 		}
+		
+		result_fd = new_result_fd;
 	}
 
 	struct stat path_stat;
