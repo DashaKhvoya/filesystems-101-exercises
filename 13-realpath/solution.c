@@ -96,8 +96,6 @@ void abspath(const char *input)
 		int new_result_fd = openat(result_fd, token, O_RDONLY | O_NOFOLLOW);
 		if (new_result_fd == -1) 
 		{
-			//printf("result <%s>, token <%s>\n", result, token);
-			//printf("errno = %d\n", errno);
 			if (errno == ELOOP) // Ссылка
 			{
 				ssize_t link_len = readlinkat(result_fd, token, link, PATH_MAX - 1);
@@ -141,7 +139,14 @@ void abspath(const char *input)
 			}
 			else 
 			{
-				report_error(result, token, errno);
+				if (strlen(result) == 0) 
+				{
+					report_error("/", token, errno);
+				} 
+				else
+				{
+					report_error(result, token, errno);
+				}
 				close(result_fd);
 				return;
 			}
