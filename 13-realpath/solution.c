@@ -19,6 +19,12 @@ void abspath(const char *input)
 
 	// Result
 	char result[PATH_MAX] = "";
+	int result_fd = open("/", O_RDONLY | O_DIRECTORY);
+	if (result_fd == -1)
+	{
+		close(result_fd);
+		return;
+	}
 	// Link path
 	char link[PATH_MAX] = "";
 	char current[PATH_MAX] = "";
@@ -29,6 +35,7 @@ void abspath(const char *input)
 	if (input[1] == '\0')
 	{
 		report_path(input);
+		close(result_fd);
 		return;
 	}
 
@@ -72,87 +79,110 @@ void abspath(const char *input)
 				char *last = strrchr(result, '/');
 				*last = '\0';
 			}
+			int new_result_fd = openat(result_fd, "..", O_RDONLY | O_DIRECTORY);
+			if (new_result_fd == -1) 
+			{
+				report_error(result, "..", errno);
+				close(result_fd);
+				return;
+			}
+			close(result_fd);
+			result_fd = new_result_fd;
+
 			continue;
 		}
 
-		char parent[PATH_MAX] = "";
-		char tmp_path[2 * PATH_MAX] = "";
-		
 		strcat(result, "/");
-		snprintf(tmp_path, 2 * PATH_MAX, "%s%s", result, token);
-		// printf("tmp path: <%s>\n", tmp_path);
-		int fd = open(result, O_RDONLY | O_DIRECTORY);
-		if (fd == -1) {
-			if (strlen(result) > 1) 
-			{
-				char *last = strrchr(result, '/');
-				*last = '\0';
-			}
-			report_error(result, token, errno);
-			return;
-		}
-
-		struct stat path_stat;
-		if (fstatat(fd, token, &path_stat, AT_SYMLINK_NOFOLLOW) < 0) {
-    		if (strlen(result) > 1)
-			{
-				char *last = strrchr(result, '/');
-				*last = '\0';
-			}
-			report_error(result, token, errno);
-			close(fd);
-			return;
-		}
-		close(fd);
-
-		strncpy(parent, result, PATH_MAX);
-		strncpy(result, tmp_path, PATH_MAX);
-		// printf("result now <%s>\n", result);
-
-		if (S_ISLNK(path_stat.st_mode))
+		int new_result_fd = openat(result_fd, token, O_DIRECTORY | O_RDONLY | O_NOFOLLOW);
+		if (new_result_fd == -1) 
 		{
-			ssize_t link_len = readlink(result, link, PATH_MAX - 1);
-			if (errno)
+			if (errno == ELOOP) // Ссылка
 			{
-				report_error(parent, token, errno);	
+				ssize_t link_len = readlinkat(result_fd, token, link, PATH_MAX - 1);
+				if (link_len == -1)
+				{
+					report_error(result, token, errno);	
+					return;
+				}
+
+				link[link_len] = '\0';
+				if (link[0] == '/')
+				{
+					close(result_fd);
+					result_fd = open("/", O_DIRECTORY | O_RDONLY);
+					if (result_fd == -1) {
+						return;
+					}
+
+					result[0] = '\0';
+				}
+				else if (strlen(result) > 1)
+				{
+					int new_result_fd = openat(result_fd, "..", O_DIRECTORY | O_RDONLY);
+					if (new_result_fd == -1) {
+						close(result_fd);
+						return;
+					}
+					close(result_fd);
+					result_fd = new_result_fd;
+
+					char *last = strrchr(result, '/');
+					*last = '\0';
+				}
+
+				if (strlen(current) > 0)
+				{
+					if (link[link_len - 1] != '/')
+					{
+						link[link_len] = '/';
+						link[link_len + 1] = '\0';
+					}
+					strcat(link, current);
+				}
+
+				strncpy(current, link, PATH_MAX);
+				continue;
+			} else if (errno == ENOTDIR) // Файл
+			{
+				if (strlen(current) > 0) 
+				{
+					report_error(result, token, errno);
+					close(result_fd);
+					return;
+				}
+				
+				new_result_fd = openat(result_fd, token, O_RDONLY);
+				if (new_result_fd == -1) {
+					report_error(result, token, errno);
+					close(result_fd);
+					return;
+				}
+				close(result_fd);
+				result_fd = new_result_fd;
+				
+				strcat(result, token);
+				continue;
+			} else 
+			{
+				report_error(result, token, errno);
+				close(result_fd);
 				return;
 			}
-			link[link_len] = '\0';
-			// printf("readed line <%s>\n", link);
-
-			if (link[0] == '/')
-			{
-				result[0] = '\0';
-			}
-			else if (strlen(result) > 1)
-			{
-				char *last = strrchr(result, '/');
-				*last = '\0';
-			}
-
-			// printf("current in link: <%s>\n", current);
-			if (strlen(current) > 0)
-			{
-				if (link[link_len - 1] != '/')
-				{
-					link[link_len] = '/';
-					link[link_len + 1] = '\0';
-				}
-				strcat(link, current);
-			}
-
-			strncpy(current, link, PATH_MAX);
-			// printf("current at the end <%s>, result <%s>\n", current, result);
 		}
+		
+		strcat(result, token);
+		close(result_fd);
+		result_fd = new_result_fd;
 	}
 
 	struct stat path_stat;
-	stat(result, &path_stat);
+	fstat(result_fd, &path_stat);
 	if (strlen(result) == 0 || S_ISDIR(path_stat.st_mode))
 	{
 		result[strlen(result) + 1] = '\0';
 		result[strlen(result)] = '/';
 	}
 
+	close(result_fd);
 	report_path(result);
 }
