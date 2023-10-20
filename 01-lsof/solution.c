@@ -65,6 +65,9 @@ void lsof(void)
 				continue;
 			}
 
+			if (srtlen(fd_dir_path) + strlen(sub_entry->d_name) > PATH_MAX - 1) {
+				continue;
+			}
 			snprintf(fd_link_path, PATH_MAX, "%s/%s", fd_dir_path, sub_entry->d_name);
 			if (errno)
 			{
