@@ -78,7 +78,7 @@ void lsof(void)
 				continue;
 			}
 
-			fd_link_path[link_len] = '\0';
+			result[link_len] = '\0';
 			report_file(result);
 		}
 		closedir(proc_fd_dir);
