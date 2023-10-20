@@ -33,7 +33,7 @@ void lsof(void)
 	}
 
 	char fd_dir_path[PATH_MAX] = "";
-	char fd_link_path[PATH_MAX] = "";
+	char fd_link_path[2*PATH_MAX] = "";
 	char result[PATH_MAX] = "";
 
 	struct dirent *entry;
@@ -65,10 +65,7 @@ void lsof(void)
 				continue;
 			}
 
-			if (srtlen(fd_dir_path) + strlen(sub_entry->d_name) > PATH_MAX - 1) {
-				continue;
-			}
-			snprintf(fd_link_path, PATH_MAX, "%s/%s", fd_dir_path, sub_entry->d_name);
+			snprintf(fd_link_path, 2*PATH_MAX, "%s/%s", fd_dir_path, sub_entry->d_name);
 			if (errno)
 			{
 				continue;
