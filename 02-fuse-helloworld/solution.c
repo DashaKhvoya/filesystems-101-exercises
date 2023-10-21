@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-#include <fuse.h>
+#include <fuse3/fuse.h>
 
 static int readdir_custom(const char *path, void *buffer, fuse_fill_dir_t filler, off_t offset,
 						  struct fuse_file_info *fi, enum fuse_readdir_flags fuse_flags)
