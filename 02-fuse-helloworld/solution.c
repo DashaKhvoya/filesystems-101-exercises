@@ -6,7 +6,7 @@
 #include <errno.h>
 #include <fuse3/fuse.h>
 
-#define BUF_SIZE 1000
+//#define BUF_SIZE 1000
 
 static int readdir_custom(const char *path, void *buffer, fuse_fill_dir_t filler, off_t offset,
 						  struct fuse_file_info *fi, enum fuse_readdir_flags fuse_flags)
@@ -30,15 +30,15 @@ static int read_custom(const char *path, char *buffer, size_t size, off_t offset
 	(void)path;
 
 	pid_t current_pid = fuse_get_context()->pid;
-	char text[BUF_SIZE];
+	//char text[BUF_SIZE];
 
-	snprintf(text, BUF_SIZE, "hello, %d\n", current_pid);
+	snprintf(buffer, "hello, %d\n", current_pid);
 
-	memcpy(buffer, text + offset, size);
+	/*memcpy(buffer, text + offset, size);
 	if (offset < (int)strlen(text))
 	{
 		return (int)strlen(text) - offset;
-	}
+	}*/
 	return 0;
 }
 
