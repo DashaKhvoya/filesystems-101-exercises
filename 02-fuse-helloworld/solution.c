@@ -47,7 +47,7 @@ static int open_custom(const char *path, struct fuse_file_info *fi)
 	(void)path;
 
 	if ((fi->flags & O_ACCMODE) != O_RDONLY)
-		return -EROFS;
+		return EROFS;
 
 	return 0;
 }
