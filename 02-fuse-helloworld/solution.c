@@ -1,7 +1,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "solution.h"
-#include <string.h>
 #include <stdio.h>
 #include <errno.h>
 #include <fuse3/fuse.h>
@@ -14,7 +13,7 @@ static int readdir_custom(const char *path, void *buffer, fuse_fill_dir_t filler
 	(void)fi;
 	(void)fuse_flags;
 
-	printf("readdir\n");
+	//printf("readdir\n");
 	filler(buffer, ".", NULL, 0, 0);
 	filler(buffer, "..", NULL, 0, 0);
 	filler(buffer, "hello", NULL, 0, 0);
@@ -29,7 +28,7 @@ static int read_custom(const char *path, char *buffer, size_t size, off_t offset
 	(void)path;
 	(void)offset;
 
-	printf("read\n");
+	//printf("read\n");
 	pid_t current_pid = fuse_get_context()->pid;
 	char text[100];
 
@@ -48,7 +47,7 @@ static int open_custom(const char *path, struct fuse_file_info *fi)
 {
 	(void)path;
 
-	printf("open\n");
+	//printf("open\n");
 	if ((fi->flags & O_ACCMODE) != O_RDONLY)
 		return -EROFS;
 
@@ -60,7 +59,7 @@ static int getattr_custom(const char *path, struct stat *st,
 {
 	(void)fi;
 
-	printf("getattr: %s\n", path);
+	//printf("getattr: %s\n", path);
 	st->st_uid = getuid();
 	st->st_gid = getgid();
 	st->st_atime = time(NULL);
