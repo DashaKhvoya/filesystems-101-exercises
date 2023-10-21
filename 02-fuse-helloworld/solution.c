@@ -55,6 +55,7 @@ static int open_custom(const char *path, struct fuse_file_info *fi)
 static int getattr_custom(const char *path, struct stat *st,
 						  struct fuse_file_info *fi)
 {
+	(void)path;
 	(void)fi;
 
 	st->st_uid = getuid();
