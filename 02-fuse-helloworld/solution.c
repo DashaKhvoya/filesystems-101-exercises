@@ -50,7 +50,7 @@ static int open_custom(const char *path, struct fuse_file_info *fi)
 
 	printf("open\n");
 	if ((fi->flags & O_ACCMODE) != O_RDONLY)
-		return EROFS;
+		return -EROFS;
 
 	return 0;
 }
@@ -76,6 +76,8 @@ static int getattr_custom(const char *path, struct stat *st,
 		st->st_mode = S_IFREG | 0444;
 		st->st_nlink = 1;
 		st->st_size = 100;
+	} else {
+		return -ENOENT;
 	}
 
 	return 0;
@@ -89,7 +91,7 @@ static int write_custom(const char *req, const char *buffer, size_t size,
 	(void)size;
 	(void)offset;
 	(void)fi;
-	return EROFS;
+	return -EROFS;
 }
 
 static int create_custom(const char *path, mode_t mode, struct fuse_file_info *fi)
@@ -97,7 +99,7 @@ static int create_custom(const char *path, mode_t mode, struct fuse_file_info *f
 	(void)path;
 	(void)mode;
 	(void)fi;
-	return EROFS;
+	return -EROFS;
 }
 
 static const struct fuse_operations hellofs_ops = {
