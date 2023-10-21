@@ -28,11 +28,12 @@ static int read_custom(const char *path, char *buffer, size_t size, off_t offset
 {
 	(void)fi;
 	(void)path;
+	(void)offset;
 
 	pid_t current_pid = fuse_get_context()->pid;
 	//char text[BUF_SIZE];
 
-	snprintf(buffer, "hello, %d\n", current_pid);
+	snprintf(buffer, size, "hello, %d\n", current_pid);
 
 	/*memcpy(buffer, text + offset, size);
 	if (offset < (int)strlen(text))
