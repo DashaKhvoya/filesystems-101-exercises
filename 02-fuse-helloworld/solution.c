@@ -3,6 +3,7 @@
 #include "solution.h"
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
 #include <fuse3/fuse.h>
 
 static int readdir_custom(const char *path, void *buffer, fuse_fill_dir_t filler, off_t offset,
