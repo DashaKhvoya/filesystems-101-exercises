@@ -6,6 +6,8 @@
 #include <string.h>
 #include <fuse3/fuse.h>
 
+#define BUF_SIZE 100
+
 static int readdir_custom(const char *path, void *buffer, fuse_fill_dir_t filler, off_t offset,
 						  struct fuse_file_info *fi, enum fuse_readdir_flags fuse_flags)
 {
@@ -14,7 +16,7 @@ static int readdir_custom(const char *path, void *buffer, fuse_fill_dir_t filler
 	(void)fi;
 	(void)fuse_flags;
 
-	//printf("readdir\n");
+	// printf("readdir\n");
 	filler(buffer, ".", NULL, 0, 0);
 	filler(buffer, "..", NULL, 0, 0);
 	filler(buffer, "hello", NULL, 0, 0);
@@ -29,11 +31,11 @@ static int read_custom(const char *path, char *buffer, size_t size, off_t offset
 	(void)path;
 	(void)offset;
 
-	//printf("read\n");
+	// printf("read\n");
 	pid_t current_pid = fuse_get_context()->pid;
-	char text[100];
+	char text[BUF_SIZE];
 
-	snprintf(text, 100, "hello, %d\n", current_pid);
+	snprintf(text, BUF_SIZE, "hello, %d\n", current_pid);
 
 	memcpy(buffer, text + offset, size);
 	if (offset < (int)strlen(text))
@@ -48,7 +50,7 @@ static int open_custom(const char *path, struct fuse_file_info *fi)
 {
 	(void)path;
 
-	//printf("open\n");
+	// printf("open\n");
 	if ((fi->flags & O_ACCMODE) != O_RDONLY)
 		return -EROFS;
 
@@ -60,7 +62,7 @@ static int getattr_custom(const char *path, struct stat *st,
 {
 	(void)fi;
 
-	//printf("getattr: %s\n", path);
+	// printf("getattr: %s\n", path);
 	st->st_uid = getuid();
 	st->st_gid = getgid();
 	st->st_atime = time(NULL);
@@ -76,7 +78,9 @@ static int getattr_custom(const char *path, struct stat *st,
 		st->st_mode = S_IFREG | 0444;
 		st->st_nlink = 1;
 		st->st_size = 100;
-	} else {
+	}
+	else
+	{
 		return -ENOENT;
 	}
 
