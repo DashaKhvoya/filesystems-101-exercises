@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include "../stdlib/fs_malloc.h"
 
-static const int BLOCK_SIZE = 256 * 1024;
+static const int QUEUE_BLOCK_SIZE = 256 * 1024;
 // #define BLOCK_SIZE 3
 #define QUEUE_SIZE 4
 
@@ -73,9 +73,9 @@ static int copy_queue(int in, int out, long size, struct io_uring *ring)
 			{
 				break;
 			}
-			if (curr_size > BLOCK_SIZE)
+			if (curr_size > QUEUE_BLOCK_SIZE)
 			{
-				curr_size = BLOCK_SIZE;
+				curr_size = QUEUE_BLOCK_SIZE;
 			}
 
 			printf("add read\n");
