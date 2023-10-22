@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include "../stdlib/fs_malloc.h"
 
-// #define QUEUE_BLOCK_SIZE (256 * 1024)
-#define QUEUE_BLOCK_SIZE 3
+#define QUEUE_BLOCK_SIZE (256 * 1024)
+// #define QUEUE_BLOCK_SIZE 3
 #define QUEUE_SIZE 4
 
 struct request
