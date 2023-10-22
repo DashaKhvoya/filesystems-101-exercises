@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include "../stdlib/fs_malloc.h"
 
-static const int QUEUE_BLOCK_SIZE = 256 * 1024;
-// #define BLOCK_SIZE 3
+// #define QUEUE_BLOCK_SIZE (256 * 1024)
+#define QUEUE_BLOCK_SIZE 3
 #define QUEUE_SIZE 4
 
 struct request
@@ -13,7 +13,6 @@ struct request
 	int is_read;
 	size_t size;
 	long offset;
-	struct iovec iov;
 };
 
 // Добавляем чтение, но без отправки submit
@@ -28,10 +27,7 @@ static int add_read(struct io_uring *ring, long size, long offset, int fd)
 	data->offset = offset;
 	data->size = size;
 
-	data->iov.iov_base = data + 1;
-	data->iov.iov_len = size;
-
-	io_uring_prep_readv(sqe, fd, &data->iov, 1, offset);
+	io_uring_prep_rw(IORING_OP_READ, sqe, fd, data + 1, size, offset);
 	io_uring_sqe_set_data(sqe, data);
 	return 0;
 }
@@ -44,7 +40,7 @@ static void add_write(struct io_uring *ring, struct request *data, int fd)
 
 	data->is_read = 0;
 
-	io_uring_prep_write(sqe, fd, data + 1, data->size, data->offset);
+	io_uring_prep_rw(IORING_OP_WRITE, sqe, fd, data + 1, data->size, data->offset);
 	io_uring_sqe_set_data(sqe, data);
 	io_uring_submit(ring);
 }
