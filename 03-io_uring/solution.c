@@ -4,9 +4,9 @@
 #include <stdio.h>
 #include "../stdlib/fs_malloc.h"
 
-static int block_size = 256 * 1024;
-// static int block_size = 3;
-static int queue_size = 4;
+#define BLOCK_SIZE = 256 * 1024;
+// #define BLOCK_SIZE = 3;
+#define QUEUE_SIZE = 4;
 
 struct request
 {
@@ -69,13 +69,13 @@ static int copy_queue(int in, int out, long size, struct io_uring *ring)
 		{
 			long curr_size = read_left;
 
-			if (read_count + write_count >= queue_size)
+			if (read_count + write_count >= QUEUE_SIZE)
 			{
 				break;
 			}
-			if (curr_size > block_size)
+			if (curr_size > BLOCK_SIZE)
 			{
-				curr_size = block_size;
+				curr_size = BLOCK_SIZE;
 			}
 
 			printf("add read\n");
@@ -181,7 +181,7 @@ int copy(int in, int out)
 	(void)out;
 
 	struct io_uring ring;
-	int err = io_uring_queue_init(queue_size, &ring, 0);
+	int err = io_uring_queue_init(QUEUE_SIZE, &ring, 0);
 	if (err)
 	{
 		return err;
