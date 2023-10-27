@@ -123,6 +123,8 @@ int ext2_blkiter_next(struct ext2_blkiter *i, int *blkno)
 		{
 			return -errno;
 		}
+		*blkno = indirect_ptr;
+		return 1;
 	}
 
 	int ptr = i->indirect_ptrs[i->curr - 12];
