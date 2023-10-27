@@ -15,8 +15,12 @@ struct ext2_fs
 
 struct ext2_blkiter
 {
+	struct ext2_fs *fs;
+
 	struct ext2_inode inode;
 	int curr;
+
+	int *indirect_ptrs;
 };
 
 int ext2_fs_init(struct ext2_fs **fs, int fd)
@@ -81,23 +85,66 @@ int ext2_blkiter_init(struct ext2_blkiter **i, struct ext2_fs *fs, int ino)
 
 	*i = new_iter;
 	new_iter->curr = 0;
+	new_iter->indirect_ptrs = NULL;
+	new_iter->fs = fs;
 
 	return 0;
 }
 
 int ext2_blkiter_next(struct ext2_blkiter *i, int *blkno)
 {
-	int ptr = i->inode.i_block[i->curr];
+	if (i->curr < 12)
+	{
+		int ptr = i->inode.i_block[i->curr];
+		if (ptr == 0)
+		{
+			return 0;
+		}
+		*blkno = ptr;
+		i->curr++;
+		return 1;
+	}
+
+	int indirect_ptr = i->inode.i_block[12];
+	if (indirect_ptr == 0)
+	{
+		return 0;
+	}
+	if (i->indirect_ptrs == NULL)
+	{
+		int res = lseek(i->fs->fd, indirect_ptr * BLOCK_SIZE, SEEK_SET);
+		if (res == -1)
+		{
+			return -errno;
+		}
+		i->indirect_ptrs = fs_xmalloc(1024 * sizeof(int));
+		res = read(i->fs->fd, i->indirect_ptrs, 1024 * sizeof(int));
+		if (res == -1)
+		{
+			return -errno;
+		}
+	}
+
+	int ptr = i->indirect_ptrs[i->curr - 12];
 	if (ptr == 0)
 	{
 		return 0;
 	}
 	*blkno = ptr;
 	i->curr++;
+
 	return 1;
 }
 
 void ext2_blkiter_free(struct ext2_blkiter *i)
 {
+	if (i == NULL)
+	{
+		return;
+	}
+	if (i->indirect_ptrs != NULL)
+	{
+		fs_xfree(i->indirect_ptrs);
+	}
 	fs_xfree(i);
 }
