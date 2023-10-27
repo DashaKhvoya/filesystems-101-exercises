@@ -9,7 +9,7 @@
 
 const char *proc_root_dir = "/proc";
 
-int is_numeric(const char *name)
+static int is_numeric(const char *name)
 {
 	int is_num = 1;
 	for (int i = 0; name[i]; i++)
@@ -33,7 +33,7 @@ void lsof(void)
 	}
 
 	char fd_dir_path[PATH_MAX] = "";
-	char fd_link_path[2*PATH_MAX] = "";
+	char fd_link_path[2 * PATH_MAX] = "";
 	char result[PATH_MAX] = "";
 
 	struct dirent *entry;
@@ -45,10 +45,6 @@ void lsof(void)
 		}
 
 		snprintf(fd_dir_path, PATH_MAX, "%s/%s/fd", proc_root_dir, entry->d_name);
-		if (errno)
-		{
-			continue;
-		}
 
 		DIR *proc_fd_dir = opendir(fd_dir_path);
 		if (!proc_fd_dir)
@@ -65,11 +61,7 @@ void lsof(void)
 				continue;
 			}
 
-			snprintf(fd_link_path, 2*PATH_MAX, "%s/%s", fd_dir_path, sub_entry->d_name);
-			if (errno)
-			{
-				continue;
-			}
+			snprintf(fd_link_path, 2 * PATH_MAX, "%s/%s", fd_dir_path, sub_entry->d_name);
 
 			ssize_t link_len = readlink(fd_link_path, result, PATH_MAX - 1);
 			if (link_len == -1)
