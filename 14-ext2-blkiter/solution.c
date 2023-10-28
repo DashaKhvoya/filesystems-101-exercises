@@ -34,13 +34,7 @@ int ext2_fs_init(struct ext2_fs **fs, int fd)
 	struct ext2_fs *new_fs = fs_xmalloc(sizeof(struct ext2_fs));
 	new_fs->fd = fd;
 
-	int res = lseek(new_fs->fd, SUPERBLOCK_OFFSET, SEEK_SET);
-	if (res == -1)
-	{
-		fs_xfree(new_fs);
-		return -errno;
-	}
-	res = read(new_fs->fd, &new_fs->super, SUPERBLOCK_SIZE);
+	int res = pread(new_fs->fd, &new_fs->super, SUPERBLOCK_SIZE, SUPERBLOCK_OFFSET);
 	if (res == -1)
 	{
 		fs_xfree(new_fs);
@@ -50,13 +44,7 @@ int ext2_fs_init(struct ext2_fs **fs, int fd)
 	// Check super MAGIC
 
 	struct ext2_group_desc group;
-	res = lseek(new_fs->fd, get_offset(new_fs, new_fs->super.s_first_data_block + 1), SEEK_SET);
-	if (res == -1)
-	{
-		fs_xfree(new_fs);
-		return -errno;
-	}
-	res = read(new_fs->fd, &group, sizeof(group));
+	res = pread(new_fs->fd, &group, sizeof(group), get_offset(new_fs, new_fs->super.s_first_data_block + 1));
 	if (res == -1)
 	{
 		fs_xfree(new_fs);
@@ -76,16 +64,12 @@ void ext2_fs_free(struct ext2_fs *fs)
 
 int ext2_blkiter_init(struct ext2_blkiter **i, struct ext2_fs *fs, int ino)
 {
-	int res = lseek(fs->fd, get_offset(fs, fs->inode_table_block) + (ino - 1) * fs->super.s_inode_size, SEEK_SET);
+	struct ext2_blkiter *new_iter = fs_xmalloc(sizeof(struct ext2_blkiter));
+	int res = pread(fs->fd, &new_iter->inode, fs->super.s_inode_size,
+					get_offset(fs, fs->inode_table_block) + (ino - 1) * fs->super.s_inode_size);
 	if (res == -1)
 	{
 		return -errno;
-	}
-	struct ext2_blkiter *new_iter = fs_xmalloc(sizeof(struct ext2_blkiter));
-	res = read(fs->fd, &new_iter->inode, sizeof(struct ext2_inode));
-	if (res == -1)
-	{
-		return errno;
 	}
 
 	*i = new_iter;
@@ -117,13 +101,8 @@ int ext2_blkiter_next(struct ext2_blkiter *i, int *blkno)
 	}
 	if (i->indirect_ptrs == NULL)
 	{
-		int res = lseek(i->fs->fd, get_offset(i->fs, indirect_ptr), SEEK_SET);
-		if (res == -1)
-		{
-			return -errno;
-		}
 		i->indirect_ptrs = fs_xmalloc(i->fs->block_size * sizeof(int));
-		res = read(i->fs->fd, i->indirect_ptrs, i->fs->block_size * sizeof(int));
+		int res = pread(i->fs->fd, i->indirect_ptrs, i->fs->block_size * sizeof(int), get_offset(i->fs, indirect_ptr));
 		if (res == -1)
 		{
 			return -errno;
