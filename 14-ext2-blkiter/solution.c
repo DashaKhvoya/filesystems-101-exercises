@@ -69,7 +69,8 @@ int ext2_blkiter_init(struct ext2_blkiter **i, struct ext2_fs *fs, int ino)
 	int ino_id = (ino - 1) % fs->super.s_inodes_per_group;
 
 	struct ext2_group_desc group;
-	int res = pread(fs->fd, &group, sizeof(group), get_offset(fs, block_group_id + fs->super.s_first_data_block + 1));
+	int res = pread(fs->fd, &group, sizeof(group),
+					get_offset(fs, fs->super.s_first_data_block + 1) + block_group_id * fs->super.s_desc_size);
 	if (res == -1)
 	{
 		return -errno;
