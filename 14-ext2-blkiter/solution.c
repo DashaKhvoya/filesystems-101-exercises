@@ -51,6 +51,8 @@ int ext2_fs_init(struct ext2_fs **fs, int fd)
 		return -errno;
 	}
 
+	printf("inodes per group: %d\n", new_fs->super.s_inodes_per_group);
+	printf("inodes count: %d, free count: %d\n", new_fs->super.s_inodes_count, new_fs->super.s_free_inodes_count);
 	new_fs->block_size = EXT2_BLOCK_SIZE(&new_fs->super);
 	// Check super MAGIC
 
@@ -65,12 +67,16 @@ void ext2_fs_free(struct ext2_fs *fs)
 
 int ext2_blkiter_init(struct ext2_blkiter **i, struct ext2_fs *fs, int ino)
 {
-	int block_group_id = (ino - 1) / fs->super.s_inodes_per_group;
+	int group_id = (ino - 1) / fs->super.s_inodes_per_group;
 	int ino_id = (ino - 1) % fs->super.s_inodes_per_group;
 
+	int desc_per_block = fs->block_size / sizeof(struct ext2_group_desc);
+
+	int blckno = fs->super.s_first_data_block + 1 + group_id / desc_per_block;
+	int blkoff = (group_id % desc_per_block) * sizeof(struct ext2_group_desc);
+
 	struct ext2_group_desc group;
-	int res = pread(fs->fd, &group, sizeof(group),
-					get_offset(fs, fs->super.s_first_data_block + 1) + block_group_id * fs->super.s_desc_size);
+	int res = pread(fs->fd, &group, sizeof(group), get_offset(fs, blckno) + blkoff);
 	if (res == -1)
 	{
 		return -errno;
