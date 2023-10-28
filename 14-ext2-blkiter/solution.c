@@ -1,3 +1,4 @@
+#include <ext2fs/ext2_fs.h>
 #include <ext2fs/ext2fs.h>
 #include <fs_malloc.h>
 #include <solution.h>
@@ -5,12 +6,11 @@
 
 #include <errno.h>
 
-#define BLOCK_SIZE 1024
-
 struct ext2_fs
 {
 	int fd;
-	int inode_table;
+	struct ext2_super_block super;
+	int inode_table_block;
 	int block_size;
 };
 
@@ -26,7 +26,7 @@ struct ext2_blkiter
 
 static int get_offset(struct ext2_fs *fs, int block)
 {
-	return BLOCK_SIZE + (block - 1) * fs->block_size;
+	return block * fs->block_size;
 }
 
 int ext2_fs_init(struct ext2_fs **fs, int fd)
@@ -34,25 +34,23 @@ int ext2_fs_init(struct ext2_fs **fs, int fd)
 	struct ext2_fs *new_fs = fs_xmalloc(sizeof(struct ext2_fs));
 	new_fs->fd = fd;
 
-	int res = lseek(new_fs->fd, BLOCK_SIZE, SEEK_SET);
+	int res = lseek(new_fs->fd, SUPERBLOCK_OFFSET, SEEK_SET);
 	if (res == -1)
 	{
 		fs_xfree(new_fs);
 		return -errno;
 	}
-
-	struct ext2_super_block super;
-	res = read(new_fs->fd, &super, sizeof(super));
+	res = read(new_fs->fd, &new_fs->super, SUPERBLOCK_SIZE);
 	if (res == -1)
 	{
 		fs_xfree(new_fs);
 		return -errno;
 	}
-	new_fs->block_size = BLOCK_SIZE << super.s_log_block_size;
+	new_fs->block_size = EXT2_BLOCK_SIZE(&new_fs->super);
 	// Check super MAGIC
 
 	struct ext2_group_desc group;
-	res = lseek(new_fs->fd, BLOCK_SIZE + new_fs->block_size, SEEK_SET);
+	res = lseek(new_fs->fd, get_offset(new_fs, new_fs->super.s_first_data_block + 1), SEEK_SET);
 	if (res == -1)
 	{
 		fs_xfree(new_fs);
@@ -66,7 +64,7 @@ int ext2_fs_init(struct ext2_fs **fs, int fd)
 	}
 	// Check group hash
 
-	new_fs->inode_table = group.bg_inode_table;
+	new_fs->inode_table_block = group.bg_inode_table;
 	*fs = new_fs;
 	return 0;
 }
@@ -78,7 +76,7 @@ void ext2_fs_free(struct ext2_fs *fs)
 
 int ext2_blkiter_init(struct ext2_blkiter **i, struct ext2_fs *fs, int ino)
 {
-	int res = lseek(fs->fd, get_offset(fs, fs->inode_table) + (ino - 1) * sizeof(struct ext2_inode), SEEK_SET);
+	int res = lseek(fs->fd, get_offset(fs, fs->inode_table_block) + (ino - 1) * fs->super.s_inode_size, SEEK_SET);
 	if (res == -1)
 	{
 		return -errno;
@@ -100,7 +98,7 @@ int ext2_blkiter_init(struct ext2_blkiter **i, struct ext2_fs *fs, int ino)
 
 int ext2_blkiter_next(struct ext2_blkiter *i, int *blkno)
 {
-	if (i->curr < 12)
+	if (i->curr < EXT2_NDIR_BLOCKS)
 	{
 		int ptr = i->inode.i_block[i->curr];
 		if (ptr == 0)
@@ -112,7 +110,7 @@ int ext2_blkiter_next(struct ext2_blkiter *i, int *blkno)
 		return 1;
 	}
 
-	int indirect_ptr = i->inode.i_block[12];
+	int indirect_ptr = i->inode.i_block[EXT2_IND_BLOCK];
 	if (indirect_ptr == 0)
 	{
 		return 0;
@@ -124,8 +122,8 @@ int ext2_blkiter_next(struct ext2_blkiter *i, int *blkno)
 		{
 			return -errno;
 		}
-		i->indirect_ptrs = fs_xmalloc(BLOCK_SIZE * sizeof(int));
-		res = read(i->fs->fd, i->indirect_ptrs, BLOCK_SIZE * sizeof(int));
+		i->indirect_ptrs = fs_xmalloc(i->fs->block_size * sizeof(int));
+		res = read(i->fs->fd, i->indirect_ptrs, i->fs->block_size * sizeof(int));
 		if (res == -1)
 		{
 			return -errno;
@@ -134,7 +132,7 @@ int ext2_blkiter_next(struct ext2_blkiter *i, int *blkno)
 		return 1;
 	}
 
-	int ptr = i->indirect_ptrs[i->curr - 12];
+	int ptr = i->indirect_ptrs[i->curr - EXT2_NDIR_BLOCKS];
 	if (ptr == 0)
 	{
 		return 0;
