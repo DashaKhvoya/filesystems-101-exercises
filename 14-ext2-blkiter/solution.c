@@ -65,7 +65,7 @@ void ext2_fs_free(struct ext2_fs *fs)
 int ext2_blkiter_init(struct ext2_blkiter **i, struct ext2_fs *fs, int ino)
 {
 	struct ext2_blkiter *new_iter = fs_xmalloc(sizeof(struct ext2_blkiter));
-	int res = pread(fs->fd, &new_iter->inode, fs->super.s_inode_size,
+	int res = pread(fs->fd, &new_iter->inode, sizeof(struct ext2_inode),
 					get_offset(fs, fs->inode_table_block) + (ino - 1) * fs->super.s_inode_size);
 	if (res == -1)
 	{
