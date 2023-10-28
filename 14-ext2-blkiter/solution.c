@@ -18,13 +18,13 @@ struct ext2_fs
 {
 	int fd;
 	struct ext2_super_block super;
-	int inode_table_block;
 	int block_size;
 };
 
 struct ext2_blkiter
 {
 	struct ext2_fs *fs;
+	int inode_table_block;
 
 	struct ext2_inode inode;
 	int curr;
@@ -50,19 +50,10 @@ int ext2_fs_init(struct ext2_fs **fs, int fd)
 		fs_xfree(new_fs);
 		return -errno;
 	}
+
 	new_fs->block_size = EXT2_BLOCK_SIZE(&new_fs->super);
 	// Check super MAGIC
 
-	struct ext2_group_desc group;
-	res = pread(new_fs->fd, &group, sizeof(group), get_offset(new_fs, new_fs->super.s_first_data_block + 1));
-	if (res == -1)
-	{
-		fs_xfree(new_fs);
-		return -errno;
-	}
-	// Check group hash
-
-	new_fs->inode_table_block = group.bg_inode_table;
 	*fs = new_fs;
 	return 0;
 }
@@ -74,9 +65,22 @@ void ext2_fs_free(struct ext2_fs *fs)
 
 int ext2_blkiter_init(struct ext2_blkiter **i, struct ext2_fs *fs, int ino)
 {
+	int block_group_id = (ino - 1) / fs->super.s_inodes_per_group;
+	int ino_id = (ino - 1) % fs->super.s_inodes_per_group;
+
+	struct ext2_group_desc group;
+	int res = pread(fs->fd, &group, sizeof(group), get_offset(fs, block_group_id + fs->super.s_first_data_block + 1));
+	if (res == -1)
+	{
+		return -errno;
+	}
+	// Check group hash
+
 	struct ext2_blkiter *new_iter = fs_xmalloc(sizeof(struct ext2_blkiter));
-	int res = pread(fs->fd, &new_iter->inode, sizeof(struct ext2_inode),
-					get_offset(fs, fs->inode_table_block) + (ino - 1) * fs->super.s_inode_size);
+	new_iter->inode_table_block = group.bg_inode_table;
+
+	res = pread(fs->fd, &new_iter->inode, sizeof(struct ext2_inode),
+				get_offset(fs, new_iter->inode_table_block) + ino_id * fs->super.s_inode_size);
 	if (res == -1)
 	{
 		return -errno;
@@ -146,7 +150,6 @@ int ext2_blkiter_next(struct ext2_blkiter *i, int *blkno)
 	}
 	if (i->curr < indirect_to)
 	{
-		// printf("indirect\n");
 		int is_updated = get_cached_block(&i->indirect, i->inode.i_block[EXT2_IND_BLOCK], i->fs);
 		if (is_updated)
 		{
@@ -170,7 +173,6 @@ int ext2_blkiter_next(struct ext2_blkiter *i, int *blkno)
 	}
 	if (i->curr < dindirect_to)
 	{
-		// printf("double indirect\n");
 		int is_updated = get_cached_block(&i->dindirect, i->inode.i_block[EXT2_DIND_BLOCK], i->fs);
 		if (is_updated)
 		{
