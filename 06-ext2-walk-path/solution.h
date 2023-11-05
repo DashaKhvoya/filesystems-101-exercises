@@ -1,5 +1,9 @@
 #pragma once
 
+int copy_file(int img, int inode_nr, int out);
+
+int find_inode(int img, int inode_nr, const char *name, int is_dir);
+
 /**
    Implement this function to copy the content of a file at @path
    to a file descriptor @out. @path has no symlinks inside it.
