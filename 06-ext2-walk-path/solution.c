@@ -252,7 +252,7 @@ static int find_inode_in_dir(struct reporter *r, int img, int blkno, int block_s
 		}
 		if (!is_dir && dir->file_type != EXT2_FT_REG_FILE)
 		{
-			return -ENOTDIR;
+			return -ENOENT;
 		}
 
 		return dir->inode;
