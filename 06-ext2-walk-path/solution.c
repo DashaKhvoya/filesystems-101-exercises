@@ -9,13 +9,17 @@
 
 #include <errno.h>
 
-struct cached_block
+struct cached_block_1
 {
 	int block_id;
 	int *block;
 };
 
-static void init_cached_block(struct cached_block *b);
+static void init_cached_block_1(struct cached_block_1 *b)
+{
+	b->block_id = 0;
+	b->block = NULL;
+}
 
 struct ext2_fs
 {
@@ -33,8 +37,8 @@ struct ext2_blkiter
 	int curr;
 	int curr_size;
 
-	struct cached_block indirect;
-	struct cached_block dindirect;
+	struct cached_block_1 indirect;
+	struct cached_block_1 dindirect;
 };
 
 static int get_offset(struct ext2_fs *fs, int block)
@@ -97,20 +101,14 @@ int ext2_blkiter_init(struct ext2_blkiter **i, struct ext2_fs *fs, int ino)
 	*i = new_iter;
 	new_iter->curr = 0;
 	new_iter->curr_size = 0;
-	init_cached_block(&new_iter->indirect);
-	init_cached_block(&new_iter->dindirect);
+	init_cached_block_1(&new_iter->indirect);
+	init_cached_block_1(&new_iter->dindirect);
 	new_iter->fs = fs;
 
 	return 0;
 }
 
-static void init_cached_block(struct cached_block *b)
-{
-	b->block_id = 0;
-	b->block = NULL;
-}
-
-static int get_cached_block(struct cached_block *b, int new_id, struct ext2_fs *fs)
+static int get_cached_block_1(struct cached_block_1 *b, int new_id, struct ext2_fs *fs)
 {
 	if (b->block && new_id == b->block_id)
 	{
@@ -159,7 +157,7 @@ static int ext2_blkiter_next(struct ext2_blkiter *i, int *blkno)
 	}
 	if (i->curr < indirect_to)
 	{
-		int is_updated = get_cached_block(&i->indirect, i->inode.i_block[EXT2_IND_BLOCK], i->fs);
+		int is_updated = get_cached_block_1(&i->indirect, i->inode.i_block[EXT2_IND_BLOCK], i->fs);
 		if (is_updated < 0)
 		{
 			return -errno;
@@ -174,7 +172,7 @@ static int ext2_blkiter_next(struct ext2_blkiter *i, int *blkno)
 	}
 	if (i->curr < dindirect_to)
 	{
-		int is_updated = get_cached_block(&i->dindirect, i->inode.i_block[EXT2_DIND_BLOCK], i->fs);
+		int is_updated = get_cached_block_1(&i->dindirect, i->inode.i_block[EXT2_DIND_BLOCK], i->fs);
 		if (is_updated)
 		{
 			return -errno;
@@ -183,7 +181,7 @@ static int ext2_blkiter_next(struct ext2_blkiter *i, int *blkno)
 		int dind_pos = (i->curr - dindirect_from) / ptrs_in_block;
 		int ind_pos = (i->curr - dindirect_from) % ptrs_in_block;
 
-		is_updated = get_cached_block(&i->indirect, i->dindirect.block[dind_pos], i->fs);
+		is_updated = get_cached_block_1(&i->indirect, i->dindirect.block[dind_pos], i->fs);
 		if (is_updated)
 		{
 			return -errno;
