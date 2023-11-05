@@ -520,12 +520,12 @@ int dump_file(int img, const char *path, int out)
 	}
 
 	char path_copy[PATH_MAX];
-	if (strlen(path) >= PATH_MAX)
+	if (strlen(path) + 1 > PATH_MAX)
 	{
 		return -ENAMETOOLONG;
 	}
 
-	strncpy(path_copy, path, strlen(path) + 1);
+	memcpy(path_copy, path, strlen(path) + 1);
 	char *rest = NULL;
 	char *token;
 
