@@ -240,7 +240,7 @@ static int find_inode_in_dir(struct reporter *r, int img, int blkno, int block_s
 
 		// printf("strcmpy %.*s with %s\n", dir->name_len, dir->name, name);
 
-		if (strncmp(name, dir->name, dir->name_len))
+		if (strlen(name) != dir->name_len || strncmp(name, dir->name, dir->name_len))
 		{
 			offset += dir->rec_len;
 			continue;
