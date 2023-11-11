@@ -24,7 +24,7 @@ static void init_cached_block(struct cached_block *b, int block_size)
 
 static int get_cached_block(struct cached_block *b, int new_id, int block_size, int fd)
 {
-	if (b->block && new_id == b->block_id)
+	if (new_id == b->block_id)
 	{
 		return 0;
 	}
