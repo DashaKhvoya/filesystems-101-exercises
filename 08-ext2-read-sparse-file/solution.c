@@ -20,6 +20,7 @@ static void init_cached_block(struct cached_block *b, int block_size)
 {
 	b->block_id = 0;
 	b->block = fs_xmalloc(block_size);
+	memset(b->block, 0, block_size);
 }
 
 static int get_cached_block(struct cached_block *b, int new_id, int block_size, int fd)
