@@ -28,6 +28,7 @@ struct ext2_blkiter
 
 	struct ext2_inode inode;
 	int curr;
+	int bytes_read;
 
 	struct cached_block indirect;
 
@@ -47,8 +48,9 @@ int ext2_fs_init(struct ext2_fs **fs, int fd)
 	int res = pread(new_fs->fd, &new_fs->super, SUPERBLOCK_SIZE, SUPERBLOCK_OFFSET);
 	if (res == -1)
 	{
+		int err = -errno;
 		fs_xfree(new_fs);
-		return -errno;
+		return err;
 	}
 
 	printf("inodes per group: %d\n", new_fs->super.s_inodes_per_group);
@@ -95,6 +97,7 @@ int ext2_blkiter_init(struct ext2_blkiter **i, struct ext2_fs *fs, int ino)
 
 	*i = new_iter;
 	new_iter->curr = 0;
+	new_iter->bytes_read = 0;
 	init_cached_block(&new_iter->indirect);
 	init_cached_block(&new_iter->dindirect);
 	new_iter->fs = fs;
@@ -121,24 +124,25 @@ static int get_cached_block(struct cached_block *b, int new_id, struct ext2_fs *
 	}
 
 	int res = pread(fs->fd, b->block, fs->block_size, get_offset(fs, new_id));
-	if (res == -1)
+	if (res < 0)
 	{
-		return -1;
+		return -errno;
 	}
 
 	b->block_id = new_id;
 	return 1;
 }
 
-static int process_direct_block(struct ext2_blkiter *i, int *blkno, int id)
+static int process_direct_block(struct ext2_blkiter *i, int blockno, int *blkno)
 {
-	int ptr = i->inode.i_block[id];
-	if (ptr == 0)
+	if (i->inode.i_size - i->bytes_read <= 0)
 	{
 		return 0;
 	}
-	*blkno = ptr;
+
+	*blkno = blockno;
 	i->curr++;
+	i->bytes_read += i->fs->block_size;
 
 	return 1;
 }
@@ -153,37 +157,30 @@ int ext2_blkiter_next(struct ext2_blkiter *i, int *blkno)
 
 	if (i->curr < direct_to)
 	{
-		return process_direct_block(i, blkno, i->curr);
+		return process_direct_block(i, i->inode.i_block[i->curr], blkno);
 	}
 	if (i->curr < indirect_to)
 	{
-		int is_updated = get_cached_block(&i->indirect, i->inode.i_block[EXT2_IND_BLOCK], i->fs);
-		if (is_updated)
+		int res = get_cached_block(&i->indirect, i->inode.i_block[EXT2_IND_BLOCK], i->fs);
+		if (res)
 		{
-			if (is_updated < 0)
+			if (res < 0)
 			{
-				return -errno;
+				return res;
 			}
 			*blkno = i->inode.i_block[EXT2_IND_BLOCK];
 			return 1;
 		}
 
 		int ind_pos = i->curr - indirect_from;
-		int ptr = i->indirect.block[ind_pos];
-		if (ptr == 0)
-		{
-			return 0;
-		}
-		*blkno = ptr;
-		i->curr++;
-		return 1;
+		return process_direct_block(i, i->indirect.block[ind_pos], blkno);
 	}
 	if (i->curr < dindirect_to)
 	{
-		int is_updated = get_cached_block(&i->dindirect, i->inode.i_block[EXT2_DIND_BLOCK], i->fs);
-		if (is_updated)
+		int res = get_cached_block(&i->dindirect, i->inode.i_block[EXT2_DIND_BLOCK], i->fs);
+		if (res)
 		{
-			if (is_updated < 0)
+			if (res < 0)
 			{
 				return -errno;
 			}
@@ -194,10 +191,10 @@ int ext2_blkiter_next(struct ext2_blkiter *i, int *blkno)
 		int dind_pos = (i->curr - dindirect_from) / ptrs_in_block;
 		int ind_pos = (i->curr - dindirect_from) % ptrs_in_block;
 
-		is_updated = get_cached_block(&i->indirect, i->dindirect.block[dind_pos], i->fs);
-		if (is_updated)
+		res = get_cached_block(&i->indirect, i->dindirect.block[dind_pos], i->fs);
+		if (res)
 		{
-			if (is_updated < 0)
+			if (res < 0)
 			{
 				return -errno;
 			}
@@ -205,14 +202,7 @@ int ext2_blkiter_next(struct ext2_blkiter *i, int *blkno)
 			return 1;
 		}
 
-		int ptr = i->indirect.block[ind_pos];
-		if (ptr == 0)
-		{
-			return 0;
-		}
-		*blkno = ptr;
-		i->curr++;
-		return 1;
+		return process_direct_block(i, i->indirect.block[ind_pos], blkno);
 	}
 
 	return 0;
