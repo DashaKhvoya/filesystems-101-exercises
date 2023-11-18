@@ -41,7 +41,7 @@ static int get_offset(struct ext2_fs *fs, int block)
 
 static int ext2_fs_init(struct ext2_fs **fs, int fd)
 {
-	struct ext2_fs *new_fs = fs_xmalloc(sizeof(struct ext2_fs));
+	struct ext2_fs *new_fs = fs_xmalloc(sizeof(*new_fs));
 	new_fs->fd = fd;
 
 	int res = pread(new_fs->fd, &new_fs->super, SUPERBLOCK_SIZE, SUPERBLOCK_OFFSET);
@@ -81,7 +81,7 @@ int ext2_blkiter_init(struct ext2_blkiter **i, struct ext2_fs *fs, int ino)
 	}
 	// Check group hash
 
-	struct ext2_blkiter *new_iter = fs_xmalloc(sizeof(struct ext2_blkiter));
+	struct ext2_blkiter *new_iter = fs_xmalloc(sizeof(*new_iter));
 	new_iter->inode_table_block = group.bg_inode_table;
 
 	res = pread(fs->fd, &new_iter->inode, sizeof(struct ext2_inode),
@@ -252,9 +252,14 @@ static int report_dir_block(struct reporter *r, int img, int blkno, int block_si
 			continue;
 		}
 
-		dir->name[dir->name_len] = '\0';
-		report_file(dir->inode, type, dir->name);
+		char *name = fs_xmalloc(dir->name_len + 1);
+		memcpy(name, dir->name, dir->name_len);
+		name[dir->name_len] = '\0';
+
+		report_file(dir->inode, type, name);
 		offset += dir->rec_len;
+
+		fs_xfree(name);
 	}
 
 	return 0;
