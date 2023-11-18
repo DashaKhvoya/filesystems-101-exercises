@@ -53,8 +53,6 @@ int ext2_fs_init(struct ext2_fs **fs, int fd)
 		return err;
 	}
 
-	printf("inodes per group: %d\n", new_fs->super.s_inodes_per_group);
-	printf("inodes count: %d, free count: %d\n", new_fs->super.s_inodes_count, new_fs->super.s_free_inodes_count);
 	new_fs->block_size = EXT2_BLOCK_SIZE(&new_fs->super);
 	// Check super MAGIC
 
@@ -135,7 +133,7 @@ static int get_cached_block(struct cached_block *b, int new_id, struct ext2_fs *
 
 static int process_direct_block(struct ext2_blkiter *i, int blockno, int *blkno)
 {
-	if (i->inode.i_size - i->bytes_read <= 0)
+	if ((int)i->inode.i_size - i->bytes_read <= 0)
 	{
 		return 0;
 	}
