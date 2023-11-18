@@ -54,8 +54,9 @@ static int ext2_fs_init(struct ext2_fs **fs, int fd)
 	int res = pread(new_fs->fd, &new_fs->super, SUPERBLOCK_SIZE, SUPERBLOCK_OFFSET);
 	if (res == -1)
 	{
+		int err = -errno;
 		fs_xfree(new_fs);
-		return -errno;
+		return err;
 	}
 
 	new_fs->block_size = EXT2_BLOCK_SIZE(&new_fs->super);
@@ -261,17 +262,12 @@ static int find_inode_in_dir(struct reporter *r, int img, int blkno, int block_s
 	return 0;
 }
 
-static int find_inode(int img, int inode_nr, const char *name, int is_dir)
+static int find_inode(struct ext2_fs *fs, int img, int inode_nr, const char *name, int is_dir)
 {
-	struct ext2_fs *fs = NULL;
 	struct ext2_blkiter *i = NULL;
 	int err = 0;
 	int inode = 0;
 
-	if ((err = ext2_fs_init(&fs, img)))
-	{
-		return -err;
-	}
 	if ((err = ext2_blkiter_init(&i, fs, inode_nr)))
 	{
 		return -err;
@@ -305,10 +301,8 @@ static int find_inode(int img, int inode_nr, const char *name, int is_dir)
 	}
 
 	ext2_blkiter_free(i);
-	ext2_fs_free(fs);
 	free_reporter(&r);
 
-	// printf("end\n");
 	if (inode > 0)
 	{
 		return inode;
@@ -457,8 +451,9 @@ static int copy_file(int img, int inode_nr, int out)
 		int res = get_cached_block(&copier.indr, inode.i_block[EXT2_IND_BLOCK], block_size, img);
 		if (res < 0)
 		{
+			int err = -errno;
 			free_copier(&copier);
-			return -errno;
+			return err;
 		}
 		int err = copy_block(&copier, img, out, block_size * copier.indr.block[i], copy_left);
 		if (err)
@@ -474,16 +469,18 @@ static int copy_file(int img, int inode_nr, int out)
 		int res = get_cached_block(&copier.dindr, inode.i_block[EXT2_DIND_BLOCK], block_size, img);
 		if (res < 0)
 		{
+			int err = -errno;
 			free_copier(&copier);
-			return -errno;
+			return err;
 		}
 		for (int i = 0; i < ptrs_in_block && copy_left > 0; i++)
 		{
 			int res = get_cached_block(&copier.indr, copier.dindr.block[indr_id], block_size, img);
 			if (res < 0)
 			{
+				int err = -errno;
 				free_copier(&copier);
-				return -errno;
+				return err;
 			}
 			int err = copy_block(&copier, img, out, block_size * copier.indr.block[i], copy_left);
 			if (err)
@@ -499,12 +496,8 @@ static int copy_file(int img, int inode_nr, int out)
 	return 0;
 }
 
-int dump_file(int img, const char *path, int out)
+static int dump_file_impl(struct ext2_fs *fs, int img, const char *path, int out)
 {
-	(void)img;
-	(void)path;
-	(void)out;
-
 	if (path[0] != '/')
 	{
 		return -ENOENT;
@@ -525,39 +518,40 @@ int dump_file(int img, const char *path, int out)
 	{
 		if (rest[0] == '\0')
 		{
-			int ret = find_inode(img, curr_inode, token, 0);
+			int ret = find_inode(fs, img, curr_inode, token, 0);
 			if (ret < 0)
-			{
-				// printf("cant find file %s: %s\n", token, strerror(-ret));
 				return ret;
-			}
 			if (ret == 0)
-			{
-				// printf("cant find file  %s: %s\n", token, strerror(-ENOENT));
 				return -ENOENT;
-			}
 			ret = copy_file(img, ret, out);
 			if (ret < 0)
-			{
-				// printf("cant copy %s: %s\n", token, strerror(-ret));
 				return ret;
-			}
 			return 0;
 		}
 
-		int ret = find_inode(img, curr_inode, token, 1);
+		int ret = find_inode(fs, img, curr_inode, token, 1);
 		if (ret < 0)
-		{
-			// printf("cant find dir %s: %s\n", token, strerror(-ret));
 			return ret;
-		}
 		if (ret == 0)
-		{
-			// printf("cant find dir  %s: %s\n", token, strerror(-ENOENT));
 			return -ENOENT;
-		}
 		curr_inode = ret;
 	}
 
 	return 0;
+}
+
+int dump_file(int img, const char *path, int out)
+{
+	struct ext2_fs *fs = NULL;
+	int err = 0;
+	err = ext2_fs_init(&fs, img);
+	if (err < 0)
+	{
+		return err;
+	}
+
+	err = dump_file_impl(fs, img, path, out);
+	ext2_fs_free(fs);
+
+	return err;
 }
