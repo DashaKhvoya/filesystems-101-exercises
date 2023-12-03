@@ -361,7 +361,7 @@ static void btree_delete_from_ok_node(struct btree_node *node, int x, struct btr
 			}
 			else
 			{
-				if (index - 1 >= 0 && node->children[index - 1]->num_keys >= t->L)
+				if ((int)index - 1 >= 0 && node->children[index - 1]->num_keys >= t->L)
 				{
 					btree_node_clockwise_rotation(node, index);
 					btree_delete_from_ok_node(sub_node, x, t);
@@ -373,7 +373,7 @@ static void btree_delete_from_ok_node(struct btree_node *node, int x, struct btr
 				}
 				else
 				{
-					if (index - 1 >= 0)
+					if ((int)index - 1 >= 0)
 					{
 						btree_merge(node, index - 1);
 						btree_delete_from_ok_node(node->children[index - 1], x, t);
