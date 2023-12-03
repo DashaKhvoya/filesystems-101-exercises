@@ -50,7 +50,7 @@ static bool btree_node_contains(struct btree_node *node, int x)
 	{
 		index -= 1;
 	}
-	// на этом моменте x должен быть < чем элемент на месте index + 1 и >= чем элемент на месте index
+
 	if (index >= 0 && node->key[index] == x)
 	{
 		return true;
@@ -258,18 +258,14 @@ bool btree_contains(struct btree *t, int x)
 
 static void btree_merge(struct btree_node *node, unsigned int index)
 {
-	printf("merge\n");
 	struct btree_node *left = node->children[index];
 	struct btree_node *right = node->children[index + 1];
 
-	printf("left keys=%d right keys=%d\n", left->num_keys, right->num_keys);
-	printf("%d %d\n", left->key[0], right->key[0]);
 	left->key[left->num_keys] = node->key[index];
 	left->children[left->num_keys + 1] = right->children[0];
 	left->num_keys += 1;
 	for (unsigned int i = 0; i < right->num_keys; ++i)
 	{
-		printf("write to index %d\n", left->num_keys + i);
 		left->key[left->num_keys + i] = right->key[i];
 		left->children[left->num_keys + i + 1] = right->children[i + 1];
 	}
@@ -451,7 +447,7 @@ void btree_delete(struct btree *t, int x)
 				}
 				else
 				{
-					btree_node_clockwise_rotation(t->root, 0);
+					btree_node_clockwise_rotation(t->root, 1);
 					btree_delete_from_ok_node(t->root->children[1], x, t);
 				}
 			}
