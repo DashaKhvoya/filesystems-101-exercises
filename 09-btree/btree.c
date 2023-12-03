@@ -400,6 +400,10 @@ void btree_delete(struct btree *t, int x)
 	{
 		btree_delete_from_ok_node(t->root, x, t);
 	}
+	else if (t->root->is_leaf)
+	{
+		btree_node_simple_delete(t->root, x);
+	}
 	else if (t->root->children[0]->num_keys < t->L && t->root->children[1]->num_keys < t->L)
 	{
 		btree_merge_root(t);
