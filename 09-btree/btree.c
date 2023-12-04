@@ -33,9 +33,12 @@ static void btree_node_free(struct btree_node *node)
 		return;
 	}
 
-	for (unsigned int i = 0; i <= node->num_keys; ++i)
+	if (!node->is_leaf)
 	{
-		btree_node_free(node->children[i]);
+		for (unsigned int i = 0; i <= node->num_keys; ++i)
+		{
+			btree_node_free(node->children[i]);
+		}
 	}
 
 	fs_xfree(node->key);
@@ -108,11 +111,17 @@ static void btree_node_clockwise_rotation(struct btree_node *parent, unsigned in
 	for (int i = node->num_keys - 1; i >= 0; --i)
 	{
 		node->key[i + 1] = node->key[i];
-		node->children[i + 2] = node->children[i + 1];
+		if (!node->is_leaf)
+		{
+			node->children[i + 2] = node->children[i + 1];
+		}
 	}
 	node->key[0] = parent->key[child_index - 1];
-	node->children[1] = node->children[0];
-	node->children[0] = left->children[left->num_keys];
+	if (!node->is_leaf)
+	{
+		node->children[1] = node->children[0];
+		node->children[0] = left->children[left->num_keys];
+	}
 	node->num_keys += 1;
 
 	parent->key[child_index - 1] = left->key[left->num_keys - 1];
@@ -125,7 +134,10 @@ static void btree_node_counterclockwise_rotation(struct btree_node *parent, unsi
 	struct btree_node *right = parent->children[child_index + 1];
 
 	node->key[node->num_keys] = parent->key[child_index];
-	node->children[node->num_keys + 1] = right->children[0];
+	if (!node->is_leaf)
+	{
+		node->children[node->num_keys + 1] = right->children[0];
+	}
 	node->num_keys += 1;
 
 	parent->key[child_index] = right->key[0];
@@ -133,9 +145,15 @@ static void btree_node_counterclockwise_rotation(struct btree_node *parent, unsi
 	for (unsigned int i = 0; i < right->num_keys - 1; ++i)
 	{
 		right->key[i] = right->key[i + 1];
-		right->children[i] = right->children[i + 1];
+		if (!node->is_leaf)
+		{
+			right->children[i] = right->children[i + 1];
+		}
 	}
-	right->children[right->num_keys - 1] = right->children[right->num_keys];
+	if (!node->is_leaf)
+	{
+		right->children[right->num_keys - 1] = right->children[right->num_keys];
+	}
 	right->num_keys -= 1;
 }
 
@@ -262,12 +280,18 @@ static void btree_merge(struct btree_node *node, unsigned int index)
 	struct btree_node *right = node->children[index + 1];
 
 	left->key[left->num_keys] = node->key[index];
-	left->children[left->num_keys + 1] = right->children[0];
+	if (!left->is_leaf)
+	{
+		left->children[left->num_keys + 1] = right->children[0];
+	}
 	left->num_keys += 1;
 	for (unsigned int i = 0; i < right->num_keys; ++i)
 	{
 		left->key[left->num_keys + i] = right->key[i];
-		left->children[left->num_keys + i + 1] = right->children[i + 1];
+		if (!left->is_leaf)
+		{
+			left->children[left->num_keys + i + 1] = right->children[i + 1];
+		}
 	}
 	left->num_keys += right->num_keys;
 
@@ -277,8 +301,8 @@ static void btree_merge(struct btree_node *node, unsigned int index)
 
 	for (unsigned int i = index; i < node->num_keys - 1; ++i)
 	{
-		node->key[index] = node->key[index + 1];
-		node->children[index + 1] = node->children[index + 2];
+		node->key[i] = node->key[i + 1];
+		node->children[i + 1] = node->children[i + 2];
 	}
 	node->num_keys -= 1;
 }
@@ -289,12 +313,18 @@ static void btree_merge_root(struct btree *t)
 	struct btree_node *right = t->root->children[1];
 
 	left->key[left->num_keys] = t->root->key[0];
-	left->children[left->num_keys + 1] = right->children[0];
+	if (!left->is_leaf)
+	{
+		left->children[left->num_keys + 1] = right->children[0];
+	}
 	left->num_keys += 1;
 	for (unsigned int i = 0; i < right->num_keys; ++i)
 	{
 		left->key[left->num_keys + i] = right->key[i];
-		left->children[left->num_keys + i + 1] = right->children[i + 1];
+		if (!left->is_leaf)
+		{
+			left->children[left->num_keys + i + 1] = right->children[i + 1];
+		}
 	}
 	left->num_keys += right->num_keys;
 
