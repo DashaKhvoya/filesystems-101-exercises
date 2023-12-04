@@ -332,6 +332,10 @@ static void btree_merge_root(struct btree *t)
 	fs_xfree(right->children);
 	fs_xfree(right);
 
+	fs_xfree(t->root->key);
+	fs_xfree(t->root->children);
+	fs_xfree(t->root);
+
 	t->root = left;
 }
 
