@@ -100,7 +100,7 @@ static int btree_node_find_right_key(struct btree_node *node)
 		return node->key[node->num_keys - 1];
 	}
 
-	return btree_node_find_left_key(node->children[node->num_keys]);
+	return btree_node_find_right_key(node->children[node->num_keys]);
 }
 
 static void btree_node_clockwise_rotation(struct btree_node *parent, unsigned int child_index)
