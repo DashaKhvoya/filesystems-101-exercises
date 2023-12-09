@@ -162,7 +162,7 @@ func (s *Server) createMetrics() error {
 		},
 	)
 
-	buckets := prometheus.ExponentialBucketsRange(0.1, 1000, 24)
+	buckets := prometheus.ExponentialBucketsRange(0.1, 10000, 24)
 	latencyHist := prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: promNamespace,
