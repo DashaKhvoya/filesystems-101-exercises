@@ -158,7 +158,7 @@ func (s *Server) createMetrics() error {
 	requestCounter := prometheus.NewCounter(
 		prometheus.CounterOpts{
 			Namespace: promNamespace,
-			Name:      "nr_nr_requests",
+			Name:      "nr_requests",
 		},
 	)
 
