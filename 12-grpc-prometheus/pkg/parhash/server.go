@@ -79,7 +79,7 @@ type Server struct {
 	hashClients []hashsvc.HashSvcClient
 
 	requestCounter prometheus.Counter
-	latencyHist    prometheus.HistogramVec // in ms
+	latencyHist    *prometheus.HistogramVec // in ms
 }
 
 func New(conf Config) *Server {
@@ -183,6 +183,9 @@ func (s *Server) createMetrics() error {
 	if err != nil {
 		return err
 	}
+
+	s.requestCounter = requestCounter
+	s.latencyHist = latencyHist
 
 	return nil
 }
